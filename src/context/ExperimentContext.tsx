@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useReducer, useEffect } from 'react';
+import React, { createContext, useContext, useReducer, useEffect, useRef, useCallback } from 'react';
 import type { ReactNode } from 'react';
 import type {
   ExperimentState,
@@ -7,9 +7,11 @@ import type {
   DemographicResponses,
   TrialData,
   PostSurveyResponses,
+  SessionTracking,
 } from '../types';
 import { stimuli, practiceStimulus } from '../data/stimuli';
 import { initializeRandomization } from '../utils/randomization';
+import { getProlificParams } from '../config';
 
 type Action =
   | { type: 'SET_PARTICIPANT_ID'; payload: string }
@@ -20,7 +22,40 @@ type Action =
   | { type: 'SET_PRACTICE_DATA'; payload: TrialData }
   | { type: 'NEXT_TRIAL' }
   | { type: 'NEXT_TRIAL_PHASE' }
-  | { type: 'SET_POST_SURVEY_RESPONSES'; payload: PostSurveyResponses };
+  | { type: 'SET_POST_SURVEY_RESPONSES'; payload: PostSurveyResponses }
+  | { type: 'UPDATE_SESSION_TRACKING'; payload: Partial<SessionTracking> };
+
+function createInitialSessionTracking(): SessionTracking {
+  const { prolificPid, studyId, sessionId } = getProlificParams();
+  return {
+    prolificPid,
+    studyId,
+    sessionId,
+    userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : '',
+    screenWidth: typeof window !== 'undefined' ? window.screen.width : 0,
+    screenHeight: typeof window !== 'undefined' ? window.screen.height : 0,
+    windowWidth: typeof window !== 'undefined' ? window.innerWidth : 0,
+    windowHeight: typeof window !== 'undefined' ? window.innerHeight : 0,
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    language: typeof navigator !== 'undefined' ? navigator.language : '',
+    platform: typeof navigator !== 'undefined' ? navigator.platform : '',
+    sessionStart: Date.now(),
+    sessionEnd: null,
+    totalDuration: null,
+    pageTimings: [],
+    focusEvents: [],
+    totalTimeAway: 0,
+    blurCount: 0,
+    mouseActivity: {
+      totalMoves: 0,
+      totalClicks: 0,
+      clickPositions: [],
+      lastMoveTime: null,
+    },
+    windowResizes: [],
+    rapidResponses: 0,
+  };
+}
 
 const initialState: ExperimentState = {
   participantId: null,
@@ -40,6 +75,7 @@ const initialState: ExperimentState = {
   trialData: [],
   practiceData: null,
   postSurveyResponses: { detectionCues: '' },
+  sessionTracking: createInitialSessionTracking(),
 };
 
 function experimentReducer(state: ExperimentState, action: Action): ExperimentState {
@@ -62,6 +98,11 @@ function experimentReducer(state: ExperimentState, action: Action): ExperimentSt
       return { ...state, currentTrialPhase: 'question2' };
     case 'SET_POST_SURVEY_RESPONSES':
       return { ...state, postSurveyResponses: action.payload };
+    case 'UPDATE_SESSION_TRACKING':
+      return {
+        ...state,
+        sessionTracking: { ...state.sessionTracking, ...action.payload },
+      };
     default:
       return state;
   }
@@ -72,6 +113,8 @@ interface ExperimentContextType {
   dispatch: React.Dispatch<Action>;
   getCurrentStimulus: () => { id: string; context: string; code: string; condition: 'human' | 'ai' } | null;
   getPracticeStimulus: () => { id: string; context: string; code: string; condition: 'human' | 'ai' };
+  recordPageEnter: (screen: ScreenType) => void;
+  finalizeSessionTracking: () => SessionTracking;
 }
 
 const ExperimentContext = createContext<ExperimentContextType | null>(null);
@@ -86,20 +129,164 @@ export function ExperimentProvider({ children }: { children: ReactNode }) {
       stimulusOrder: order,
       conditionAssignments: conditions,
       questionOrderAssignments: questionOrders,
+      sessionTracking: createInitialSessionTracking(),
     };
   });
 
-  // Warn before leaving mid-experiment
+  const lastBlurTime = useRef<number | null>(null);
+
+  // Track focus/blur events globally
   useEffect(() => {
+    const handleFocus = () => {
+      const now = Date.now();
+      let timeAway: number | undefined;
+
+      if (lastBlurTime.current !== null) {
+        timeAway = now - lastBlurTime.current;
+        dispatch({
+          type: 'UPDATE_SESSION_TRACKING',
+          payload: {
+            totalTimeAway: state.sessionTracking.totalTimeAway + timeAway,
+            focusEvents: [
+              ...state.sessionTracking.focusEvents,
+              { timestamp: now, type: 'focus' as const, timeAwayMs: timeAway },
+            ],
+          },
+        });
+      } else {
+        dispatch({
+          type: 'UPDATE_SESSION_TRACKING',
+          payload: {
+            focusEvents: [
+              ...state.sessionTracking.focusEvents,
+              { timestamp: now, type: 'focus' as const },
+            ],
+          },
+        });
+      }
+      lastBlurTime.current = null;
+    };
+
+    const handleBlur = () => {
+      const now = Date.now();
+      lastBlurTime.current = now;
+      dispatch({
+        type: 'UPDATE_SESSION_TRACKING',
+        payload: {
+          blurCount: state.sessionTracking.blurCount + 1,
+          focusEvents: [
+            ...state.sessionTracking.focusEvents,
+            { timestamp: now, type: 'blur' as const },
+          ],
+        },
+      });
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        handleBlur();
+      } else {
+        handleFocus();
+      }
+    };
+
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      // Record the beforeunload event
+      const updatedFocusEvents = [
+        ...state.sessionTracking.focusEvents,
+        { timestamp: Date.now(), type: 'beforeunload' as const },
+      ];
+
+      // Try to save to localStorage
+      try {
+        localStorage.setItem('session_tracking_backup', JSON.stringify({
+          ...state.sessionTracking,
+          focusEvents: updatedFocusEvents,
+        }));
+      } catch (err) {
+        // Ignore
+      }
+
       if (state.currentScreen !== 'welcome' && state.currentScreen !== 'completion') {
         e.preventDefault();
         e.returnValue = '';
       }
     };
+
+    // Mouse tracking
+    let mouseMovesCount = 0;
+    let mouseMoveTimeout: number | null = null;
+
+    const handleMouseMove = () => {
+      mouseMovesCount++;
+      if (mouseMoveTimeout === null) {
+        mouseMoveTimeout = window.setTimeout(() => {
+          dispatch({
+            type: 'UPDATE_SESSION_TRACKING',
+            payload: {
+              mouseActivity: {
+                ...state.sessionTracking.mouseActivity,
+                totalMoves: state.sessionTracking.mouseActivity.totalMoves + mouseMovesCount,
+                lastMoveTime: Date.now(),
+              },
+            },
+          });
+          mouseMovesCount = 0;
+          mouseMoveTimeout = null;
+        }, 1000); // Batch every second
+      }
+    };
+
+    const handleClick = (e: MouseEvent) => {
+      const newClickPositions = state.sessionTracking.mouseActivity.clickPositions.length < 100
+        ? [...state.sessionTracking.mouseActivity.clickPositions, { x: e.clientX, y: e.clientY, timestamp: Date.now() }]
+        : state.sessionTracking.mouseActivity.clickPositions;
+
+      dispatch({
+        type: 'UPDATE_SESSION_TRACKING',
+        payload: {
+          mouseActivity: {
+            ...state.sessionTracking.mouseActivity,
+            totalClicks: state.sessionTracking.mouseActivity.totalClicks + 1,
+            clickPositions: newClickPositions,
+          },
+        },
+      });
+    };
+
+    const handleResize = () => {
+      dispatch({
+        type: 'UPDATE_SESSION_TRACKING',
+        payload: {
+          windowWidth: window.innerWidth,
+          windowHeight: window.innerHeight,
+          windowResizes: [
+            ...state.sessionTracking.windowResizes,
+            { timestamp: Date.now(), width: window.innerWidth, height: window.innerHeight },
+          ],
+        },
+      });
+    };
+
+    window.addEventListener('focus', handleFocus);
+    window.addEventListener('blur', handleBlur);
     window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [state.currentScreen]);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('click', handleClick);
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      window.removeEventListener('blur', handleBlur);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('click', handleClick);
+      window.removeEventListener('resize', handleResize);
+      if (mouseMoveTimeout) clearTimeout(mouseMoveTimeout);
+    };
+  }, [state.currentScreen, state.sessionTracking]);
 
   const getCurrentStimulus = () => {
     if (state.currentTrialIndex >= state.stimulusOrder.length) return null;
@@ -117,8 +304,58 @@ export function ExperimentProvider({ children }: { children: ReactNode }) {
     return { id: practiceStimulus.id, context: practiceStimulus.context, code, condition };
   };
 
+  // Record when entering a new page/screen
+  const recordPageEnter = useCallback((screen: ScreenType) => {
+    const now = Date.now();
+    const pageTimings = [...state.sessionTracking.pageTimings];
+
+    // Close out previous page if exists
+    if (pageTimings.length > 0) {
+      const lastPage = pageTimings[pageTimings.length - 1];
+      if (lastPage.exitTime === null) {
+        lastPage.exitTime = now;
+        lastPage.duration = now - lastPage.enterTime;
+      }
+    }
+
+    // Add new page
+    pageTimings.push({
+      screen,
+      enterTime: now,
+      exitTime: null,
+      duration: null,
+    });
+
+    dispatch({
+      type: 'UPDATE_SESSION_TRACKING',
+      payload: { pageTimings },
+    });
+  }, [state.sessionTracking.pageTimings]);
+
+  // Finalize session tracking for submission
+  const finalizeSessionTracking = useCallback((): SessionTracking => {
+    const now = Date.now();
+    const pageTimings = [...state.sessionTracking.pageTimings];
+
+    // Close out last page
+    if (pageTimings.length > 0) {
+      const lastPage = pageTimings[pageTimings.length - 1];
+      if (lastPage.exitTime === null) {
+        lastPage.exitTime = now;
+        lastPage.duration = now - lastPage.enterTime;
+      }
+    }
+
+    return {
+      ...state.sessionTracking,
+      sessionEnd: now,
+      totalDuration: now - state.sessionTracking.sessionStart,
+      pageTimings,
+    };
+  }, [state.sessionTracking]);
+
   return (
-    <ExperimentContext.Provider value={{ state, dispatch, getCurrentStimulus, getPracticeStimulus }}>
+    <ExperimentContext.Provider value={{ state, dispatch, getCurrentStimulus, getPracticeStimulus, recordPageEnter, finalizeSessionTracking }}>
       {children}
     </ExperimentContext.Provider>
   );

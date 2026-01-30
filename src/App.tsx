@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { ExperimentProvider, useExperiment } from './context/ExperimentContext';
 import { MobileBlocker } from './components/MobileBlocker';
 import { WelcomeScreen } from './components/screens/WelcomeScreen';
@@ -9,7 +10,12 @@ import { PostSurveyScreen } from './components/screens/PostSurveyScreen';
 import { CompletionScreen } from './components/screens/CompletionScreen';
 
 function ExperimentRouter() {
-  const { state } = useExperiment();
+  const { state, recordPageEnter } = useExperiment();
+
+  // Track page timing whenever screen changes
+  useEffect(() => {
+    recordPageEnter(state.currentScreen);
+  }, [state.currentScreen, recordPageEnter]);
 
   const renderScreen = () => {
     switch (state.currentScreen) {

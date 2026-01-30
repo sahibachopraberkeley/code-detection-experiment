@@ -5,22 +5,30 @@ import { submitExperimentData, type SubmissionStatus, type SubmissionResult } fr
 import type { ExperimentData } from '../../types';
 
 export function CompletionScreen() {
-  const { state } = useExperiment();
+  const { state, finalizeSessionTracking } = useExperiment();
   const [copied, setCopied] = useState(false);
   const [submissionStatus, setSubmissionStatus] = useState<SubmissionStatus>('idle');
   const [submissionResult, setSubmissionResult] = useState<SubmissionResult | null>(null);
   const submissionAttempted = useRef(false);
+  const experimentDataRef = useRef<ExperimentData | null>(null);
 
-  const experimentData: ExperimentData = {
-    participantId: state.participantId || 'unknown',
-    startTime: state.startTime,
-    endTime: new Date().toISOString(),
-    screeningResponses: state.screeningResponses,
-    demographicResponses: state.demographicResponses,
-    trialData: state.trialData,
-    practiceData: state.practiceData,
-    postSurveyResponses: state.postSurveyResponses,
-  };
+  // Build experiment data once on mount
+  if (experimentDataRef.current === null) {
+    const sessionTracking = finalizeSessionTracking();
+    experimentDataRef.current = {
+      participantId: state.participantId || 'unknown',
+      startTime: state.startTime,
+      endTime: new Date().toISOString(),
+      screeningResponses: state.screeningResponses,
+      demographicResponses: state.demographicResponses,
+      trialData: state.trialData,
+      practiceData: state.practiceData,
+      postSurveyResponses: state.postSurveyResponses,
+      sessionTracking,
+    };
+  }
+
+  const experimentData = experimentDataRef.current;
 
   useEffect(() => {
     // Prevent duplicate submissions

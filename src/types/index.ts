@@ -13,6 +13,67 @@ export interface BehaviorLog {
   timeToFirstInteraction: number | null;
 }
 
+// Track time spent on each page/screen
+export interface PageTiming {
+  screen: ScreenType;
+  enterTime: number;
+  exitTime: number | null;
+  duration: number | null; // in milliseconds
+}
+
+// Track window focus/blur events globally
+export interface FocusEvent {
+  timestamp: number;
+  type: 'focus' | 'blur' | 'beforeunload';
+  timeAwayMs?: number; // How long they were away (for blur->focus pairs)
+}
+
+// Mouse activity tracking for bot detection
+export interface MouseActivity {
+  totalMoves: number;
+  totalClicks: number;
+  clickPositions: Array<{ x: number; y: number; timestamp: number }>;
+  lastMoveTime: number | null;
+}
+
+// Comprehensive session tracking for quality/bot detection
+export interface SessionTracking {
+  // Prolific metadata
+  prolificPid: string | null;
+  studyId: string | null;
+  sessionId: string | null;
+
+  // Device/browser info
+  userAgent: string;
+  screenWidth: number;
+  screenHeight: number;
+  windowWidth: number;
+  windowHeight: number;
+  timezone: string;
+  language: string;
+  platform: string;
+
+  // Session timing
+  sessionStart: number;
+  sessionEnd: number | null;
+  totalDuration: number | null;
+
+  // Page timings
+  pageTimings: PageTiming[];
+
+  // Focus/attention tracking
+  focusEvents: FocusEvent[];
+  totalTimeAway: number; // Total time window was not focused
+  blurCount: number; // How many times they left the window
+
+  // Mouse activity (bot detection)
+  mouseActivity: MouseActivity;
+
+  // Quality signals
+  windowResizes: Array<{ timestamp: number; width: number; height: number }>;
+  rapidResponses: number; // Count of responses made in < 1 second
+}
+
 export interface TrialResponses {
   aiDetection: 'yes' | 'no' | 'unsure' | null;
   aiConfidence: number | null; // 1-5
@@ -78,6 +139,7 @@ export interface ExperimentState {
   trialData: TrialData[];
   practiceData: TrialData | null;
   postSurveyResponses: PostSurveyResponses;
+  sessionTracking: SessionTracking;
 }
 
 export interface ExperimentData {
@@ -89,4 +151,5 @@ export interface ExperimentData {
   trialData: TrialData[];
   practiceData: TrialData | null;
   postSurveyResponses: PostSurveyResponses;
+  sessionTracking: SessionTracking;
 }
