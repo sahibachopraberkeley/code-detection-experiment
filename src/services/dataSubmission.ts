@@ -24,8 +24,12 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
  * 2. Local storage (always as backup)
  */
 export async function submitExperimentData(data: ExperimentData): Promise<SubmissionResult> {
-  // Always save to localStorage first as backup
-  saveToLocalStorage(data);
+  // Try to save to localStorage as backup (but don't let it block submission)
+  try {
+    saveToLocalStorage(data);
+  } catch (error) {
+    console.warn('localStorage backup failed (quota exceeded), continuing with API submission...', error);
+  }
 
   // Add metadata to the submission
   const enrichedData = {
