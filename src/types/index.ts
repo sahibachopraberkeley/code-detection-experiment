@@ -174,4 +174,6 @@ export interface ExperimentData {
   postSurveyResponses: PostSurveyResponses;
   sessionTracking: SessionTracking;
   bonusInfo: BonusInfo;
+  submissionType: 'partial' | 'final';
+  trialsCompleted: number; // How many trials completed at time of submission
 }

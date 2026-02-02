@@ -15,7 +15,7 @@ const confidenceLevels = [
 ];
 
 export function TrialScreen() {
-  const { state, dispatch, getCurrentStimulus } = useExperiment();
+  const { state, dispatch, getCurrentStimulus, submitPartialData } = useExperiment();
   const behaviorLogger = useBehaviorLogger();
 
   const [responses, setResponses] = useState<TrialResponses>({
@@ -71,7 +71,7 @@ export function TrialScreen() {
     ? responses.aiDetection !== null && responses.aiConfidence !== null
     : responses.effortConfidence !== null;
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (!isPhaseComplete || !currentStimulus) return;
 
     if (currentPhase === 'question1') {
@@ -97,6 +97,12 @@ export function TrialScreen() {
           behaviorLog: log,
         },
       });
+
+      // Submit partial data to Google Sheets after each trial
+      // Use setTimeout to ensure state has updated before submitting
+      setTimeout(() => {
+        submitPartialData();
+      }, 100);
 
       if (currentTrialNumber >= totalTrials) {
         dispatch({ type: 'SET_SCREEN', payload: 'postsurvey' });

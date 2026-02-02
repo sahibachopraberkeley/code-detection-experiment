@@ -13,6 +13,8 @@ import type {
 import { stimuli, practiceStimulus } from '../data/stimuli';
 import { initializeRandomization } from '../utils/randomization';
 import { getProlificParams } from '../config';
+import { submitExperimentData } from '../services/dataSubmission';
+import { calculateTotalBonus } from '../utils/bonusCalculation';
 
 type Action =
   | { type: 'SET_PARTICIPANT_ID'; payload: string }
@@ -136,6 +138,7 @@ interface ExperimentContextType {
   finalizeSessionTracking: () => SessionTracking;
   clearSavedState: () => void;
   hasSavedState: boolean;
+  submitPartialData: () => Promise<void>;
 }
 
 // Helper functions for localStorage
@@ -243,6 +246,51 @@ export function ExperimentProvider({ children }: { children: ReactNode }) {
     clearStateFromStorage();
     setHasSavedState(false);
   }, []);
+
+  // Submit partial data to Google Sheets (called after each trial)
+  const submitPartialData = useCallback(async () => {
+    // Only submit if we have trial data
+    if (state.trialData.length === 0) {
+      console.log('[PartialSubmit] No trial data to submit yet');
+      return;
+    }
+
+    const now = Date.now();
+    const bonus = calculateTotalBonus(state.trialData);
+
+    const partialData = {
+      participantId: state.participantId || 'unknown',
+      startTime: state.startTime,
+      endTime: new Date().toISOString(),
+      screeningResponses: state.screeningResponses,
+      codeScreenerResponses: state.codeScreenerResponses,
+      demographicResponses: state.demographicResponses,
+      trialData: state.trialData,
+      practiceData: state.practiceData,
+      postSurveyResponses: state.postSurveyResponses,
+      sessionTracking: {
+        ...state.sessionTracking,
+        sessionEnd: now,
+        totalDuration: now - state.sessionTracking.sessionStart,
+      },
+      bonusInfo: {
+        totalBonus: bonus.totalBonus,
+        totalScore: bonus.totalScore,
+        maxPossibleScore: bonus.maxPossibleScore,
+      },
+      submissionType: 'partial' as const,
+      trialsCompleted: state.trialData.length,
+    };
+
+    try {
+      console.log(`[PartialSubmit] Submitting partial data (${state.trialData.length} trials completed)`);
+      await submitExperimentData(partialData);
+      console.log('[PartialSubmit] Partial data submitted successfully');
+    } catch (error) {
+      console.warn('[PartialSubmit] Failed to submit partial data:', error);
+      // Don't throw - partial submission failure shouldn't break the experiment
+    }
+  }, [state.participantId, state.startTime, state.screeningResponses, state.codeScreenerResponses, state.demographicResponses, state.trialData, state.practiceData, state.postSurveyResponses, state.sessionTracking]);
 
   // Track focus/blur events globally
   useEffect(() => {
@@ -464,7 +512,7 @@ export function ExperimentProvider({ children }: { children: ReactNode }) {
   }, [state.sessionTracking]);
 
   return (
-    <ExperimentContext.Provider value={{ state, dispatch, getCurrentStimulus, getPracticeStimulus, recordPageEnter, finalizeSessionTracking, clearSavedState, hasSavedState }}>
+    <ExperimentContext.Provider value={{ state, dispatch, getCurrentStimulus, getPracticeStimulus, recordPageEnter, finalizeSessionTracking, clearSavedState, hasSavedState, submitPartialData }}>
       {children}
     </ExperimentContext.Provider>
   );

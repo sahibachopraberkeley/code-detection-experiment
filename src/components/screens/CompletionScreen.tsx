@@ -44,6 +44,8 @@ export function CompletionScreen() {
         totalScore: bonus.totalScore,
         maxPossibleScore: bonus.maxPossibleScore,
       },
+      submissionType: 'final',
+      trialsCompleted: state.trialData.length,
     };
   }
 

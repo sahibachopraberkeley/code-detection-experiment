@@ -14,6 +14,8 @@ export interface SubmissionResult {
  */
 export async function submitExperimentData(data: ExperimentData): Promise<SubmissionResult> {
   console.log('[Submission] Starting submission...');
+  console.log('[Submission] Type:', data?.submissionType || 'unknown');
+  console.log('[Submission] Trials completed:', data?.trialsCompleted || 0);
   console.log('[Submission] Data received:', data ? 'yes' : 'no');
 
   // Add metadata to the submission
