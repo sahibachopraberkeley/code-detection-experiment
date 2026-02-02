@@ -71,10 +71,20 @@ export function WelcomeScreen() {
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
           <h2 className="text-lg font-semibold text-yellow-800 mb-2">Requirements</h2>
           <ul className="list-disc list-inside space-y-1 text-yellow-700">
-            <li>Programming experience (any language)</li>
+            <li><span className="font-medium">Python programming experience</span> (all code snippets are in Python)</li>
             <li>Desktop or laptop computer</li>
             <li>Must pass the coding knowledge check to continue</li>
           </ul>
+        </div>
+
+        {/* No LLM Warning */}
+        <div className="bg-red-50 border border-red-300 rounded-lg p-4">
+          <h2 className="text-lg font-semibold text-red-800 mb-2">Important</h2>
+          <p className="text-red-700">
+            <span className="font-medium">Do not use any AI tools or LLMs</span> (e.g., ChatGPT, Claude, Copilot)
+            to assist with this study. We have methods to detect AI-assisted responses, and any responses
+            found to be AI-assisted will be <span className="font-medium">void and unpaid</span>.
+          </p>
         </div>
 
         {/* Payment Information */}
@@ -124,6 +134,15 @@ export function WelcomeScreen() {
           </p>
         </div>
       )}
+
+      {/* Consent Notice */}
+      <div className="mb-6 p-4 bg-gray-100 border border-gray-300 rounded-lg">
+        <p className="text-sm text-gray-700">
+          <span className="font-medium">Consent:</span> By clicking "Begin" below, you confirm that you have
+          read and understood the information above, and you voluntarily agree to participate in this research study.
+          Your participation is voluntary and you may withdraw at any time.
+        </p>
+      </div>
 
       <button
         onClick={handleBegin}
