@@ -15,7 +15,7 @@ export function ScreeningScreen() {
     });
 
     if (hasCodedRecently) {
-      dispatch({ type: 'SET_SCREEN', payload: 'demographics' });
+      dispatch({ type: 'SET_SCREEN', payload: 'code-screener' });
     } else {
       setShowDisqualified(true);
     }

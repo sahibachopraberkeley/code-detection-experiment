@@ -3,6 +3,7 @@ import { ExperimentProvider, useExperiment } from './context/ExperimentContext';
 import { MobileBlocker } from './components/MobileBlocker';
 import { WelcomeScreen } from './components/screens/WelcomeScreen';
 import { ScreeningScreen } from './components/screens/ScreeningScreen';
+import { CodeScreenerScreen } from './components/screens/CodeScreenerScreen';
 import { DemographicsScreen } from './components/screens/DemographicsScreen';
 import { PracticeScreen, PracticeFeedbackScreen } from './components/screens/PracticeScreen';
 import { TrialScreen } from './components/screens/TrialScreen';
@@ -23,6 +24,8 @@ function ExperimentRouter() {
         return <WelcomeScreen />;
       case 'screening':
         return <ScreeningScreen />;
+      case 'code-screener':
+        return <CodeScreenerScreen />;
       case 'demographics':
         return <DemographicsScreen />;
       case 'practice':

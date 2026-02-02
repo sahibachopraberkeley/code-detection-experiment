@@ -99,10 +99,22 @@ export interface ScreeningResponses {
   hasCodedRecently: boolean | null;
 }
 
+export interface CodeScreenerResponses {
+  answers: Record<string, string>; // questionId -> selected answer
+  correctCount: number;
+  passed: boolean;
+}
+
+export interface GitHubInfo {
+  hasGitHub: boolean | null;
+  githubUrl: string;
+}
+
 export interface DemographicResponses {
   yearsExperience: string;
   primaryLanguages: string[];
   aiToolUsage: string;
+  github: GitHubInfo;
 }
 
 export interface PostSurveyResponses {
@@ -112,6 +124,7 @@ export interface PostSurveyResponses {
 export type ScreenType =
   | 'welcome'
   | 'screening'
+  | 'code-screener'
   | 'demographics'
   | 'practice'
   | 'practice-feedback'
@@ -135,6 +148,7 @@ export interface ExperimentState {
 
   // Collected data
   screeningResponses: ScreeningResponses;
+  codeScreenerResponses: CodeScreenerResponses;
   demographicResponses: DemographicResponses;
   trialData: TrialData[];
   practiceData: TrialData | null;
@@ -147,6 +161,7 @@ export interface ExperimentData {
   startTime: string;
   endTime: string;
   screeningResponses: ScreeningResponses;
+  codeScreenerResponses: CodeScreenerResponses;
   demographicResponses: DemographicResponses;
   trialData: TrialData[];
   practiceData: TrialData | null;

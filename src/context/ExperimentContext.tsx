@@ -4,6 +4,7 @@ import type {
   ExperimentState,
   ScreenType,
   ScreeningResponses,
+  CodeScreenerResponses,
   DemographicResponses,
   TrialData,
   PostSurveyResponses,
@@ -17,6 +18,7 @@ type Action =
   | { type: 'SET_PARTICIPANT_ID'; payload: string }
   | { type: 'SET_SCREEN'; payload: ScreenType }
   | { type: 'SET_SCREENING_RESPONSES'; payload: ScreeningResponses }
+  | { type: 'SET_CODE_SCREENER_RESPONSES'; payload: CodeScreenerResponses }
   | { type: 'SET_DEMOGRAPHIC_RESPONSES'; payload: DemographicResponses }
   | { type: 'ADD_TRIAL_DATA'; payload: TrialData }
   | { type: 'SET_PRACTICE_DATA'; payload: TrialData }
@@ -67,10 +69,12 @@ const initialState: ExperimentState = {
   currentTrialIndex: 0,
   currentTrialPhase: 'question1',
   screeningResponses: { hasCodedRecently: null },
+  codeScreenerResponses: { answers: {}, correctCount: 0, passed: false },
   demographicResponses: {
     yearsExperience: '',
     primaryLanguages: [],
     aiToolUsage: '',
+    github: { hasGitHub: null, githubUrl: '' },
   },
   trialData: [],
   practiceData: null,
@@ -86,6 +90,8 @@ function experimentReducer(state: ExperimentState, action: Action): ExperimentSt
       return { ...state, currentScreen: action.payload };
     case 'SET_SCREENING_RESPONSES':
       return { ...state, screeningResponses: action.payload };
+    case 'SET_CODE_SCREENER_RESPONSES':
+      return { ...state, codeScreenerResponses: action.payload };
     case 'SET_DEMOGRAPHIC_RESPONSES':
       return { ...state, demographicResponses: action.payload };
     case 'ADD_TRIAL_DATA':

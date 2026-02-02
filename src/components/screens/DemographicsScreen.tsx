@@ -31,6 +31,7 @@ export function DemographicsScreen() {
     yearsExperience: '',
     primaryLanguages: [],
     aiToolUsage: '',
+    github: { hasGitHub: null, githubUrl: '' },
   });
 
   const handleLanguageToggle = (language: string) => {
@@ -42,8 +43,16 @@ export function DemographicsScreen() {
     }));
   };
 
+  const isGitHubValid =
+    responses.github.hasGitHub === false ||
+    (responses.github.hasGitHub === true && responses.github.githubUrl.trim() !== '');
+
   const isValid =
-    responses.yearsExperience && responses.primaryLanguages.length > 0 && responses.aiToolUsage;
+    responses.yearsExperience &&
+    responses.primaryLanguages.length > 0 &&
+    responses.aiToolUsage &&
+    responses.github.hasGitHub !== null &&
+    isGitHubValid;
 
   const handleContinue = () => {
     if (!isValid) return;
@@ -115,6 +124,65 @@ export function DemographicsScreen() {
               </option>
             ))}
           </select>
+        </div>
+
+        {/* GitHub Account */}
+        <div>
+          <label className="block text-lg font-medium text-gray-900 mb-3">
+            Do you have a GitHub account?
+          </label>
+          <div className="space-y-3">
+            <label className="flex items-center gap-3 p-4 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+              <input
+                type="radio"
+                name="hasGitHub"
+                checked={responses.github.hasGitHub === true}
+                onChange={() =>
+                  setResponses((prev) => ({
+                    ...prev,
+                    github: { ...prev.github, hasGitHub: true },
+                  }))
+                }
+                className="w-4 h-4 text-blue-600 focus:ring-blue-500"
+              />
+              <span className="text-gray-700">Yes</span>
+            </label>
+            <label className="flex items-center gap-3 p-4 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+              <input
+                type="radio"
+                name="hasGitHub"
+                checked={responses.github.hasGitHub === false}
+                onChange={() =>
+                  setResponses((prev) => ({
+                    ...prev,
+                    github: { hasGitHub: false, githubUrl: '' },
+                  }))
+                }
+                className="w-4 h-4 text-blue-600 focus:ring-blue-500"
+              />
+              <span className="text-gray-700">No</span>
+            </label>
+          </div>
+
+          {responses.github.hasGitHub === true && (
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Please enter your GitHub profile URL
+              </label>
+              <input
+                type="url"
+                placeholder="https://github.com/username"
+                value={responses.github.githubUrl}
+                onChange={(e) =>
+                  setResponses((prev) => ({
+                    ...prev,
+                    github: { ...prev.github, githubUrl: e.target.value },
+                  }))
+                }
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+          )}
         </div>
       </div>
 
