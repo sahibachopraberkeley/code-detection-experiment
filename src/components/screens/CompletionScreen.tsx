@@ -117,12 +117,6 @@ export function CompletionScreen() {
         </div>
       )}
 
-      {submissionStatus === 'success' && submissionResult?.fallbackUsed && (
-        <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
-          <p className="text-green-700 text-sm">{submissionResult.message}</p>
-        </div>
-      )}
-
       <div className="mb-6">
         <svg
           className="w-20 h-20 mx-auto text-green-500"
@@ -191,9 +185,9 @@ export function CompletionScreen() {
       </div>
 
       <p className="text-sm text-gray-500">
-        {submissionStatus === 'success' && !submissionResult?.fallbackUsed
+        {submissionStatus === 'success'
           ? 'Your data has been successfully submitted.'
-          : 'Your data has been saved locally as a backup.'}
+          : 'There was an issue submitting your data.'}
       </p>
 
       {submissionResult?.submissionId && (
