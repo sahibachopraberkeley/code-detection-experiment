@@ -75,7 +75,7 @@ export interface SessionTracking {
 }
 
 export interface TrialResponses {
-  aiDetection: 'yes' | 'no' | 'unsure' | null;
+  aiDetection: 'yes' | 'no' | null;
   aiConfidence: number | null; // 1-5
   effortEstimate: number; // 1-10
   effortConfidence: number | null; // 1-5
@@ -87,7 +87,7 @@ export interface TrialData {
   presentationOrder: number;
   questionOrder: 'ai-first' | 'effort-first'; // Which question was shown first
   responses: {
-    aiDetection: 'yes' | 'no' | 'unsure';
+    aiDetection: 'yes' | 'no';
     aiConfidence: number;
     effortEstimate: number;
     effortConfidence: number;

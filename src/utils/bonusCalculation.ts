@@ -19,7 +19,7 @@ import type { TrialData } from '../types';
 const MAX_BONUS = 1.50;
 
 // Number of trials
-const NUM_TRIALS = 6;
+const NUM_TRIALS = 5;
 
 // Maximum score per trial (when p=1 and correct, score = 2*1 - 1² = 1)
 const MAX_SCORE_PER_TRIAL = 1.0;
@@ -29,17 +29,12 @@ const MAX_SCORE_PER_TRIAL = 1.0;
  *
  * Response mapping:
  * - "yes" (thinks it's AI) + confidence 1-5 → 0.6 to 1.0
- * - "unsure" → 0.5
  * - "no" (thinks it's human) + confidence 1-5 → 0.4 to 0.0
  */
 export function responseToProbability(
-  aiDetection: 'yes' | 'no' | 'unsure',
+  aiDetection: 'yes' | 'no',
   aiConfidence: number
 ): number {
-  if (aiDetection === 'unsure') {
-    return 0.5;
-  }
-
   // Confidence is 1-5, map to probability offset
   // Confidence 1 = barely confident (closer to 0.5)
   // Confidence 5 = very confident (closer to 0 or 1)

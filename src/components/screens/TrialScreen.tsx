@@ -185,7 +185,7 @@ function AIQuestionForm({
           Do you think this code was written with AI assistance?
         </h3>
         <div className="flex gap-6">
-          {(['yes', 'no', 'unsure'] as const).map((option) => (
+          {(['yes', 'no'] as const).map((option) => (
             <label key={option} className="flex items-center gap-2 cursor-pointer">
               <input
                 type="radio"
