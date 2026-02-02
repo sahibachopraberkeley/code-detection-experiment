@@ -3,17 +3,16 @@
 
 export const config = {
   // API endpoint for data submission
-  // Set VITE_API_ENDPOINT in .env file or use the default
-  apiEndpoint: import.meta.env.VITE_API_ENDPOINT || '/api/submit',
+  apiEndpoint: import.meta.env.VITE_API_ENDPOINT || 'https://script.google.com/macros/s/AKfycbwwvnJXXWSTef73xEMnSG8HYdJbsVjzKkLCZA8llN2k7-Ww3uaViiPg_FSEcJhGkqv-/exec',
 
-  // Prolific completion URL - replace XXXXXX with your actual completion code
-  prolificCompletionUrl: import.meta.env.VITE_PROLIFIC_COMPLETION_URL || 'https://app.prolific.com/submissions/complete?cc=XXXXXX',
+  // Prolific completion URL
+  prolificCompletionUrl: 'https://app.prolific.com/submissions/complete?cc=C1CBDIGP',
 
   // Completion code shown to participants
-  completionCode: import.meta.env.VITE_COMPLETION_CODE || 'EFFORT2024',
+  completionCode: 'C1CBDIGP',
 
   // Whether to use Prolific (extracts PROLIFIC_PID from URL)
-  useProlific: import.meta.env.VITE_USE_PROLIFIC === 'true',
+  useProlific: true,
 
   // Study metadata
   studyName: 'code-detection-experiment',
