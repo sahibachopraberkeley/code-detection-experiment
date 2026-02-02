@@ -1,7 +1,8 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useMemo } from 'react';
 import { useExperiment } from '../../context/ExperimentContext';
 import { config } from '../../config';
 import { submitExperimentData, type SubmissionStatus, type SubmissionResult } from '../../services/dataSubmission';
+import { calculateTotalBonus, formatBonus } from '../../utils/bonusCalculation';
 import type { ExperimentData } from '../../types';
 
 export function CompletionScreen() {
@@ -12,9 +13,21 @@ export function CompletionScreen() {
   const submissionAttempted = useRef(false);
   const experimentDataRef = useRef<ExperimentData | null>(null);
 
+  // Calculate bonus based on trial responses
+  const bonusInfo = useMemo(() => {
+    if (state.trialData.length === 0) {
+      return { totalBonus: 0, totalScore: 0, maxPossibleScore: 6, trialScores: [] };
+    }
+    return calculateTotalBonus(state.trialData);
+  }, [state.trialData]);
+
   // Build experiment data once on mount
   if (experimentDataRef.current === null) {
     const sessionTracking = finalizeSessionTracking();
+    const bonus = state.trialData.length > 0
+      ? calculateTotalBonus(state.trialData)
+      : { totalBonus: 0, totalScore: 0, maxPossibleScore: 6, trialScores: [] };
+
     experimentDataRef.current = {
       participantId: state.participantId || 'unknown',
       startTime: state.startTime,
@@ -26,6 +39,11 @@ export function CompletionScreen() {
       practiceData: state.practiceData,
       postSurveyResponses: state.postSurveyResponses,
       sessionTracking,
+      bonusInfo: {
+        totalBonus: bonus.totalBonus,
+        totalScore: bonus.totalScore,
+        maxPossibleScore: bonus.maxPossibleScore,
+      },
     };
   }
 
@@ -147,6 +165,33 @@ export function CompletionScreen() {
         Your responses have been recorded. We appreciate your time and thoughtful participation in
         this study.
       </p>
+
+      {/* Payment Summary */}
+      <div className="bg-green-50 border border-green-200 rounded-lg p-6 mb-6">
+        <h2 className="text-lg font-medium text-green-800 mb-4">Your Payment</h2>
+        <div className="space-y-2">
+          <div className="flex justify-between items-center">
+            <span className="text-green-700">Base payment:</span>
+            <span className="font-semibold text-green-800">$2.50</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-green-700">Performance bonus:</span>
+            <span className="font-semibold text-green-800">{formatBonus(bonusInfo.totalBonus)}</span>
+          </div>
+          <div className="border-t border-green-300 pt-2 mt-2">
+            <div className="flex justify-between items-center">
+              <span className="text-green-800 font-medium">Total:</span>
+              <span className="text-xl font-bold text-green-800">
+                {formatBonus(2.50 + bonusInfo.totalBonus)}
+              </span>
+            </div>
+          </div>
+        </div>
+        <p className="text-xs text-green-600 mt-3">
+          Bonus calculated using quadratic scoring based on accuracy and confidence.
+          Your bonus will be paid via Prolific within a few days.
+        </p>
+      </div>
 
       <div className="bg-gray-50 rounded-lg p-6 mb-6">
         <h2 className="text-lg font-medium text-gray-900 mb-2">Completion Code</h2>

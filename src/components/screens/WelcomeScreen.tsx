@@ -42,20 +42,62 @@ export function WelcomeScreen() {
 
   return (
     <div className="max-w-2xl mx-auto">
-      <h1 className="text-3xl font-bold text-gray-900 mb-6">Code Evaluation Study</h1>
+      <h1 className="text-3xl font-bold text-gray-900 mb-6">Code Review Study</h1>
 
-      <div className="prose prose-lg text-gray-600 mb-8">
-        <p>
-          In this study, you will view code snippets and answer questions about them. There are no
-          right or wrong answers—we're interested in your judgment.
-        </p>
-        <p>The study consists of:</p>
-        <ul className="list-disc list-inside space-y-1">
-          <li>A few background questions</li>
-          <li>One practice trial</li>
-          <li>5 main evaluation trials</li>
-          <li>A brief final question</li>
-        </ul>
+      <div className="space-y-6 mb-8">
+        {/* Study Overview */}
+        <div>
+          <h2 className="text-lg font-semibold text-gray-900 mb-2">What You'll Do</h2>
+          <p className="text-gray-600">
+            You will review several code snippets and answer questions about each one.
+            No coding is required — you will only read and evaluate code.
+          </p>
+        </div>
+
+        {/* Study Structure */}
+        <div>
+          <h2 className="text-lg font-semibold text-gray-900 mb-2">Study Structure</h2>
+          <ul className="list-disc list-inside space-y-1 text-gray-600">
+            <li>Coding knowledge check (5 questions)</li>
+            <li>Background questions</li>
+            <li>One practice trial</li>
+            <li>6 main evaluation trials</li>
+            <li>A brief final question</li>
+          </ul>
+          <p className="text-gray-500 text-sm mt-2">Estimated time: 10-15 minutes</p>
+        </div>
+
+        {/* Requirements */}
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <h2 className="text-lg font-semibold text-yellow-800 mb-2">Requirements</h2>
+          <ul className="list-disc list-inside space-y-1 text-yellow-700">
+            <li>Programming experience (any language)</li>
+            <li>Desktop or laptop computer</li>
+            <li>Must pass the coding knowledge check to continue</li>
+          </ul>
+        </div>
+
+        {/* Payment Information */}
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+          <h2 className="text-lg font-semibold text-green-800 mb-2">Payment</h2>
+          <div className="space-y-2 text-green-700">
+            <p><span className="font-medium">Base payment:</span> $2.50</p>
+            <p><span className="font-medium">Performance bonus:</span> Up to $1.50</p>
+            <p className="text-sm text-green-600 mt-2">
+              Your bonus is calculated based on the accuracy and confidence of your responses.
+              Being confident and correct earns the highest bonus. Being uncertain is better than
+              being confidently wrong.
+            </p>
+          </div>
+        </div>
+
+        {/* Instructions */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <p className="text-blue-700">
+            <span className="font-medium">Tip:</span> Please give your initial impressions —
+            don't overthink any single response.
+          </p>
+        </div>
       </div>
 
       {showManualInput && (

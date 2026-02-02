@@ -156,6 +156,12 @@ export interface ExperimentState {
   sessionTracking: SessionTracking;
 }
 
+export interface BonusInfo {
+  totalBonus: number;
+  totalScore: number;
+  maxPossibleScore: number;
+}
+
 export interface ExperimentData {
   participantId: string;
   startTime: string;
@@ -167,4 +173,5 @@ export interface ExperimentData {
   practiceData: TrialData | null;
   postSurveyResponses: PostSurveyResponses;
   sessionTracking: SessionTracking;
+  bonusInfo: BonusInfo;
 }
