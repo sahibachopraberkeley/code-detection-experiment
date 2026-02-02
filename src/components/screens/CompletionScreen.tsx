@@ -6,7 +6,7 @@ import { calculateTotalBonus, formatBonus } from '../../utils/bonusCalculation';
 import type { ExperimentData } from '../../types';
 
 export function CompletionScreen() {
-  const { state, finalizeSessionTracking } = useExperiment();
+  const { state, finalizeSessionTracking, clearSavedState } = useExperiment();
   const [copied, setCopied] = useState(false);
   const [submissionStatus, setSubmissionStatus] = useState<SubmissionStatus>('idle');
   const [submissionResult, setSubmissionResult] = useState<SubmissionResult | null>(null);
@@ -66,6 +66,11 @@ export function CompletionScreen() {
         setSubmissionResult(result);
         setSubmissionStatus(result.success ? 'success' : 'error');
         console.log('Submission result:', result);
+        // Clear saved state after successful submission
+        if (result.success) {
+          clearSavedState();
+          console.log('[Completion] Cleared saved state after successful submission');
+        }
       } catch (error) {
         console.error('Submission error:', error);
         setSubmissionStatus('error');
@@ -77,7 +82,7 @@ export function CompletionScreen() {
     };
 
     submitData();
-  }, []);
+  }, [clearSavedState]);
 
   const handleCopyData = async () => {
     try {
@@ -97,6 +102,11 @@ export function CompletionScreen() {
       const result = await submitExperimentData(experimentData);
       setSubmissionResult(result);
       setSubmissionStatus(result.success ? 'success' : 'error');
+      // Clear saved state after successful retry
+      if (result.success) {
+        clearSavedState();
+        console.log('[Retry] Cleared saved state after successful submission');
+      }
     } catch (error) {
       console.error('Retry submission error:', error);
       setSubmissionStatus('error');

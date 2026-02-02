@@ -25,7 +25,11 @@ type Action =
   | { type: 'NEXT_TRIAL' }
   | { type: 'NEXT_TRIAL_PHASE' }
   | { type: 'SET_POST_SURVEY_RESPONSES'; payload: PostSurveyResponses }
-  | { type: 'UPDATE_SESSION_TRACKING'; payload: Partial<SessionTracking> };
+  | { type: 'UPDATE_SESSION_TRACKING'; payload: Partial<SessionTracking> }
+  | { type: 'RESTORE_STATE'; payload: ExperimentState }
+  | { type: 'CLEAR_SAVED_STATE' };
+
+const STORAGE_KEY = 'code_detection_experiment_state';
 
 function createInitialSessionTracking(): SessionTracking {
   const { prolificPid, studyId, sessionId } = getProlificParams();
@@ -109,6 +113,15 @@ function experimentReducer(state: ExperimentState, action: Action): ExperimentSt
         ...state,
         sessionTracking: { ...state.sessionTracking, ...action.payload },
       };
+    case 'RESTORE_STATE':
+      return action.payload;
+    case 'CLEAR_SAVED_STATE':
+      try {
+        localStorage.removeItem(STORAGE_KEY);
+      } catch (e) {
+        // Ignore storage errors
+      }
+      return state;
     default:
       return state;
   }
@@ -121,12 +134,77 @@ interface ExperimentContextType {
   getPracticeStimulus: () => { id: string; context: string; code: string; condition: 'human' | 'ai' };
   recordPageEnter: (screen: ScreenType) => void;
   finalizeSessionTracking: () => SessionTracking;
+  clearSavedState: () => void;
+  hasSavedState: boolean;
+}
+
+// Helper functions for localStorage
+function saveStateToStorage(state: ExperimentState): void {
+  try {
+    // Don't save if on completion screen (already submitted)
+    if (state.currentScreen === 'completion') return;
+
+    const stateToSave = {
+      ...state,
+      // Exclude session tracking from saved state to keep it small
+      // Session tracking will be recreated on restore
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(stateToSave));
+    console.log('[Storage] State saved to localStorage');
+  } catch (e) {
+    console.warn('[Storage] Failed to save state:', e);
+  }
+}
+
+function loadStateFromStorage(): ExperimentState | null {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      console.log('[Storage] Found saved state, screen:', parsed.currentScreen);
+      return parsed;
+    }
+  } catch (e) {
+    console.warn('[Storage] Failed to load state:', e);
+  }
+  return null;
+}
+
+function clearStateFromStorage(): void {
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+    console.log('[Storage] Cleared saved state');
+  } catch (e) {
+    console.warn('[Storage] Failed to clear state:', e);
+  }
 }
 
 const ExperimentContext = createContext<ExperimentContextType | null>(null);
 
 export function ExperimentProvider({ children }: { children: ReactNode }) {
+  const [hasSavedState, setHasSavedState] = React.useState(() => {
+    return loadStateFromStorage() !== null;
+  });
+
   const [state, dispatch] = useReducer(experimentReducer, initialState, (initial) => {
+    // Check for saved state first
+    const savedState = loadStateFromStorage();
+    if (savedState) {
+      console.log('[Init] Restoring saved state from localStorage');
+      // Restore session tracking with fresh values
+      return {
+        ...savedState,
+        sessionTracking: {
+          ...createInitialSessionTracking(),
+          // Preserve some important tracking data if available
+          ...(savedState.sessionTracking ? {
+            sessionStart: savedState.sessionTracking.sessionStart,
+            pageTimings: savedState.sessionTracking.pageTimings || [],
+          } : {}),
+        },
+      };
+    }
+
     // Initialize randomization on first load
     const stimulusIds = stimuli.map((s) => s.id);
     const { order, conditions, questionOrders } = initializeRandomization(stimulusIds);
@@ -140,6 +218,31 @@ export function ExperimentProvider({ children }: { children: ReactNode }) {
   });
 
   const lastBlurTime = useRef<number | null>(null);
+
+  // Auto-save state to localStorage whenever important data changes
+  useEffect(() => {
+    // Save after any meaningful state change (not just session tracking updates)
+    if (state.currentScreen !== 'welcome') {
+      saveStateToStorage(state);
+    }
+  }, [
+    state.currentScreen,
+    state.participantId,
+    state.screeningResponses,
+    state.codeScreenerResponses,
+    state.demographicResponses,
+    state.trialData,
+    state.practiceData,
+    state.postSurveyResponses,
+    state.currentTrialIndex,
+    state.currentTrialPhase,
+  ]);
+
+  // Clear saved state function
+  const clearSavedState = useCallback(() => {
+    clearStateFromStorage();
+    setHasSavedState(false);
+  }, []);
 
   // Track focus/blur events globally
   useEffect(() => {
@@ -361,7 +464,7 @@ export function ExperimentProvider({ children }: { children: ReactNode }) {
   }, [state.sessionTracking]);
 
   return (
-    <ExperimentContext.Provider value={{ state, dispatch, getCurrentStimulus, getPracticeStimulus, recordPageEnter, finalizeSessionTracking }}>
+    <ExperimentContext.Provider value={{ state, dispatch, getCurrentStimulus, getPracticeStimulus, recordPageEnter, finalizeSessionTracking, clearSavedState, hasSavedState }}>
       {children}
     </ExperimentContext.Provider>
   );
