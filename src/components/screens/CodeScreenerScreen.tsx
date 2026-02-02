@@ -130,9 +130,16 @@ export function CodeScreenerScreen() {
           who can demonstrate programming knowledge. Based on your responses, you did not
           meet the required threshold.
         </p>
-        <p className="text-gray-500 text-sm">
-          You may close this window now.
-        </p>
+        <div className="bg-gray-50 rounded-lg p-6 mb-6">
+          <h2 className="text-lg font-medium text-gray-900 mb-2">Screenout Code</h2>
+          <p className="text-3xl font-mono font-bold text-gray-600">CLS1F0CN</p>
+        </div>
+        <a
+          href="https://app.prolific.com/submissions/complete?cc=CLS1F0CN"
+          className="inline-block w-full py-3 px-6 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
+        >
+          Return to Prolific
+        </a>
       </div>
     );
   }
