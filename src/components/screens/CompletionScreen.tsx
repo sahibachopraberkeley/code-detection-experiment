@@ -71,6 +71,8 @@ export function CompletionScreen() {
   };
 
   const handleRetry = async () => {
+    console.log('[Retry] Button clicked, attempting retry...');
+    console.log('[Retry] experimentData:', experimentData ? 'exists' : 'null');
     setSubmissionStatus('submitting');
     try {
       const result = await submitExperimentData(experimentData);

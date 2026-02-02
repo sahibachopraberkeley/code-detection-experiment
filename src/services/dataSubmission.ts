@@ -13,6 +13,9 @@ export interface SubmissionResult {
  * Submit experiment data to Google Apps Script
  */
 export async function submitExperimentData(data: ExperimentData): Promise<SubmissionResult> {
+  console.log('[Submission] Starting submission...');
+  console.log('[Submission] Data received:', data ? 'yes' : 'no');
+
   // Add metadata to the submission
   const enrichedData = {
     ...data,
@@ -39,8 +42,9 @@ export async function submitExperimentData(data: ExperimentData): Promise<Submis
   console.log('Data size:', jsonData.length, 'bytes');
 
   // Use sendBeacon for reliable delivery (works even if page is closing)
+  // Note: Use text/plain for Google Apps Script compatibility
   if (navigator.sendBeacon) {
-    const blob = new Blob([jsonData], { type: 'application/json' });
+    const blob = new Blob([jsonData], { type: 'text/plain' });
     const sent = navigator.sendBeacon(config.apiEndpoint, blob);
 
     if (sent) {
