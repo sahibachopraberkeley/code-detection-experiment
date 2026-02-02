@@ -6,10 +6,10 @@ export const config = {
   apiEndpoint: import.meta.env.VITE_API_ENDPOINT || 'https://script.google.com/macros/s/AKfycbwwvnJXXWSTef73xEMnSG8HYdJbsVjzKkLCZA8llN2k7-Ww3uaViiPg_FSEcJhGkqv-/exec',
 
   // Prolific completion URL
-  prolificCompletionUrl: 'https://app.prolific.com/submissions/complete?cc=C1CBDIGP',
+  prolificCompletionUrl: 'https://app.prolific.com/submissions/complete?cc=C1DVUFOT',
 
   // Completion code shown to participants
-  completionCode: 'C1CBDIGP',
+  completionCode: 'C1DVUFOT',
 
   // Whether to use Prolific (extracts PROLIFIC_PID from URL)
   useProlific: true,
