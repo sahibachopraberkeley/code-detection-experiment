@@ -31,10 +31,11 @@ export async function submitExperimentData(data: ExperimentData): Promise<Submis
   }
 
   // Extract key fields for separate columns (for easier querying)
-  // Store the full data in raw_data as backup
+  // NOTE: Removed raw_data column to prevent database bloat
   const submissionData = {
     participant_id: data.participantId,
     submission_id: `${data.participantId}_${Date.now()}`,
+    submission_type: data.submissionType || 'unknown',
     passed_screener: data.codeScreenerResponses?.passed || false,
     years_experience: data.demographicResponses?.yearsExperience || null,
     ai_tool_usage: data.demographicResponses?.aiToolUsage || null,
@@ -47,17 +48,14 @@ export async function submitExperimentData(data: ExperimentData): Promise<Submis
     })) || [],
     demographic_responses: data.demographicResponses || {},
     post_survey_responses: data.postSurveyResponses || {},
-    raw_data: {
-      ...data,
-      metadata: {
-        studyName: config.studyName,
-        studyVersion: config.studyVersion,
-        submittedAt: new Date().toISOString(),
-        userAgent: navigator.userAgent,
-        screenWidth: window.screen.width,
-        screenHeight: window.screen.height,
-        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-      },
+    metadata: {
+      studyName: config.studyName,
+      studyVersion: config.studyVersion,
+      submittedAt: new Date().toISOString(),
+      userAgent: navigator.userAgent,
+      screenWidth: window.screen.width,
+      screenHeight: window.screen.height,
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     },
   };
 
