@@ -2,8 +2,12 @@
 // In production, these should be set via environment variables
 
 export const config = {
-  // API endpoint for data submission
-  apiEndpoint: import.meta.env.VITE_API_ENDPOINT || 'https://script.google.com/macros/s/AKfycbwwvnJXXWSTef73xEMnSG8HYdJbsVjzKkLCZA8llN2k7-Ww3uaViiPg_FSEcJhGkqv-/exec',
+  // Supabase configuration
+  supabaseUrl: import.meta.env.VITE_SUPABASE_URL || '',
+  supabaseKey: import.meta.env.VITE_SUPABASE_KEY || '',
+
+  // Legacy API endpoint (kept for reference, not used)
+  apiEndpoint: import.meta.env.VITE_API_ENDPOINT || '',
 
   // Prolific completion URL
   prolificCompletionUrl: 'https://app.prolific.com/submissions/complete?cc=C1DVUFOT',

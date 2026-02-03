@@ -1,3 +1,4 @@
+import { createClient } from '@supabase/supabase-js';
 import type { ExperimentData } from '../types';
 import { config } from '../config';
 
@@ -9,8 +10,13 @@ export interface SubmissionResult {
   submissionId?: string;
 }
 
+// Initialize Supabase client
+const supabase = config.supabaseUrl && config.supabaseKey
+  ? createClient(config.supabaseUrl, config.supabaseKey)
+  : null;
+
 /**
- * Submit experiment data to Google Apps Script
+ * Submit experiment data to Supabase
  */
 export async function submitExperimentData(data: ExperimentData): Promise<SubmissionResult> {
   console.log('[Submission] Starting submission...');
@@ -18,67 +24,66 @@ export async function submitExperimentData(data: ExperimentData): Promise<Submis
   console.log('[Submission] Trials completed:', data?.trialsCompleted || 0);
   console.log('[Submission] Data received:', data ? 'yes' : 'no');
 
-  // Add metadata to the submission
-  const enrichedData = {
-    ...data,
-    metadata: {
-      studyName: config.studyName,
-      studyVersion: config.studyVersion,
-      submittedAt: new Date().toISOString(),
-      userAgent: navigator.userAgent,
-      screenWidth: window.screen.width,
-      screenHeight: window.screen.height,
-      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+  // Check if Supabase is configured
+  if (!supabase) {
+    console.error('Supabase not configured');
+    throw new Error('Supabase not configured. Please set VITE_SUPABASE_URL and VITE_SUPABASE_KEY.');
+  }
+
+  // Extract key fields for separate columns (for easier querying)
+  // Store the full data in raw_data as backup
+  const submissionData = {
+    participant_id: data.participantId,
+    submission_id: `${data.participantId}_${Date.now()}`,
+    passed_screener: data.codeScreenerResponses?.passed || false,
+    years_experience: data.demographicResponses?.yearsExperience || null,
+    ai_tool_usage: data.demographicResponses?.aiToolUsage || null,
+    trial_data: data.trialData?.map(t => ({
+      stimulusId: t.stimulusId,
+      condition: t.condition,
+      presentationOrder: t.presentationOrder,
+      questionOrder: t.questionOrder,
+      responses: t.responses,
+    })) || [],
+    demographic_responses: data.demographicResponses || {},
+    post_survey_responses: data.postSurveyResponses || {},
+    raw_data: {
+      ...data,
+      metadata: {
+        studyName: config.studyName,
+        studyVersion: config.studyVersion,
+        submittedAt: new Date().toISOString(),
+        userAgent: navigator.userAgent,
+        screenWidth: window.screen.width,
+        screenHeight: window.screen.height,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      },
     },
   };
 
-  const jsonData = JSON.stringify(enrichedData);
+  console.log('Submitting to Supabase...');
+  console.log('Data size:', JSON.stringify(submissionData).length, 'bytes');
 
-  // Check if API endpoint is configured
-  if (!config.apiEndpoint || config.apiEndpoint === '/api/submit') {
-    console.error('API endpoint not configured');
-    throw new Error('API endpoint not configured. Please set VITE_API_ENDPOINT.');
-  }
-
-  console.log('Submitting to:', config.apiEndpoint);
-  console.log('Data size:', jsonData.length, 'bytes');
-
-  // Use sendBeacon for reliable delivery (works even if page is closing)
-  // Note: Use text/plain for Google Apps Script compatibility
-  if (navigator.sendBeacon) {
-    const blob = new Blob([jsonData], { type: 'text/plain' });
-    const sent = navigator.sendBeacon(config.apiEndpoint, blob);
-
-    if (sent) {
-      console.log('Data sent via sendBeacon');
-      return {
-        success: true,
-        message: 'Data submitted successfully',
-        submissionId: `beacon_${Date.now()}`,
-      };
-    }
-    console.warn('sendBeacon returned false, trying fetch...');
-  }
-
-  // Fallback to fetch with no-cors (for Google Apps Script)
   try {
-    await fetch(config.apiEndpoint, {
-      method: 'POST',
-      mode: 'no-cors',
-      headers: {
-        'Content-Type': 'text/plain',
-      },
-      body: jsonData,
-    });
+    const { data: result, error } = await supabase
+      .from('responses')
+      .insert([submissionData])
+      .select('id')
+      .single();
 
-    console.log('Data sent via fetch (no-cors)');
+    if (error) {
+      console.error('Supabase error:', error);
+      throw new Error(`Supabase error: ${error.message}`);
+    }
+
+    console.log('Data submitted successfully, ID:', result?.id);
     return {
       success: true,
       message: 'Data submitted successfully',
-      submissionId: `fetch_${Date.now()}`,
+      submissionId: result?.id || `supabase_${Date.now()}`,
     };
   } catch (error) {
-    console.error('Fetch failed:', error);
+    console.error('Submission failed:', error);
     throw error;
   }
 }
