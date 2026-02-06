@@ -1,0 +1,16 @@
+{
+  "name": "submit-experiment-data",
+  "version": "1.0.0",
+  "description": "Lambda function for submitting experiment data to S3",
+  "type": "module",
+  "main": "index.mjs",
+  "scripts": {
+    "test": "echo \"No tests configured\" && exit 0"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.500.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

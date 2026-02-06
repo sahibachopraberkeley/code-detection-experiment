@@ -2,25 +2,22 @@
 // In production, these should be set via environment variables
 
 export const config = {
-  // Supabase configuration
-  supabaseUrl: import.meta.env.VITE_SUPABASE_URL || '',
-  supabaseKey: import.meta.env.VITE_SUPABASE_KEY || '',
-
-  // Legacy API endpoint (kept for reference, not used)
+  // API configuration (S3 via API Gateway)
   apiEndpoint: import.meta.env.VITE_API_ENDPOINT || '',
+  apiKey: import.meta.env.VITE_API_KEY || '',
 
   // Prolific completion URL
-  prolificCompletionUrl: 'https://app.prolific.com/submissions/complete?cc=C1DVUFOT',
+  prolificCompletionUrl: import.meta.env.VITE_PROLIFIC_COMPLETION_URL || 'https://app.prolific.com/submissions/complete?cc=C1DVUFOT',
 
   // Completion code shown to participants
-  completionCode: 'C1DVUFOT',
+  completionCode: import.meta.env.VITE_COMPLETION_CODE || 'C1DVUFOT',
 
   // Whether to use Prolific (extracts PROLIFIC_PID from URL)
-  useProlific: true,
+  useProlific: import.meta.env.VITE_USE_PROLIFIC === 'true',
 
   // Study metadata
   studyName: 'code-detection-experiment',
-  studyVersion: '1.0.0',
+  studyVersion: '1.1.0', // Updated for S3 migration
 };
 
 // Extract Prolific participant ID from URL parameters
@@ -43,4 +40,3 @@ export function generateParticipantId(): string {
   const randomPart = Math.random().toString(36).substring(2, 8);
   return `P_${timestamp}_${randomPart}`;
 }
-// Trigger deploy Sun Feb  1 15:28:45 PST 2026

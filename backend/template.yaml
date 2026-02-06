@@ -1,0 +1,121 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Code Detection Experiment - S3 Data Submission Backend
+
+Parameters:
+  Environment:
+    Type: String
+    Default: prod
+    AllowedValues:
+      - dev
+      - staging
+      - prod
+    Description: Deployment environment
+
+  CorsOrigin:
+    Type: String
+    Default: '*'
+    Description: Allowed CORS origin (use specific domain in production)
+
+Globals:
+  Function:
+    Timeout: 30
+    Runtime: nodejs20.x
+    MemorySize: 256
+    Environment:
+      Variables:
+        BUCKET_NAME: !Ref ExperimentDataBucket
+        ENVIRONMENT: !Ref Environment
+
+Resources:
+  # S3 Bucket for storing experiment submissions
+  ExperimentDataBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub 'experiment-data-code-detection-${Environment}'
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      LifecycleConfiguration:
+        Rules:
+          - Id: MoveToInfrequentAccess
+            Status: Enabled
+            Transitions:
+              - StorageClass: STANDARD_IA
+                TransitionInDays: 90
+          - Id: MoveToGlacier
+            Status: Enabled
+            Transitions:
+              - StorageClass: GLACIER
+                TransitionInDays: 365
+      Tags:
+        - Key: Project
+          Value: code-detection-experiment
+        - Key: Environment
+          Value: !Ref Environment
+
+  # Lambda function for handling submissions
+  SubmitExperimentDataFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub 'code-detection-submit-${Environment}'
+      CodeUri: lambda/submitExperimentData/
+      Handler: index.handler
+      Description: Handles experiment data submissions and stores in S3
+      Policies:
+        - S3WritePolicy:
+            BucketName: !Ref ExperimentDataBucket
+      Events:
+        SubmitApi:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ExperimentApi
+            Path: /submit
+            Method: POST
+
+  # API Gateway with built-in API Key support
+  ExperimentApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: !Sub 'code-detection-api-${Environment}'
+      StageName: !Ref Environment
+      Cors:
+        AllowMethods: "'POST, OPTIONS'"
+        AllowHeaders: "'Content-Type, X-Api-Key'"
+        AllowOrigin: !Sub "'${CorsOrigin}'"
+      Auth:
+        ApiKeyRequired: true
+        UsagePlan:
+          CreateUsagePlan: PER_API
+          Description: !Sub 'Usage plan for code detection experiment ${Environment}'
+          Quota:
+            Limit: 100000
+            Period: MONTH
+          Throttle:
+            BurstLimit: 100
+            RateLimit: 50
+
+Outputs:
+  ApiEndpoint:
+    Description: API Gateway endpoint URL for data submission
+    Value: !Sub 'https://${ExperimentApi}.execute-api.${AWS::Region}.amazonaws.com/${Environment}/submit'
+    Export:
+      Name: !Sub '${AWS::StackName}-ApiEndpoint'
+
+  BucketName:
+    Description: S3 bucket name for experiment data
+    Value: !Ref ExperimentDataBucket
+    Export:
+      Name: !Sub '${AWS::StackName}-BucketName'
+
+  BucketArn:
+    Description: S3 bucket ARN
+    Value: !GetAtt ExperimentDataBucket.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-BucketArn'

@@ -23,3 +23,15 @@ dist-ssr
 *.sln
 *.sw?
 .env
+
+# SAM build artifacts
+backend/.aws-sam/
+backend/samconfig.toml
+
+# Downloaded data
+data/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
