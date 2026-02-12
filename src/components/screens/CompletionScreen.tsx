@@ -16,7 +16,7 @@ export function CompletionScreen() {
   // Calculate bonus based on trial responses
   const bonusInfo = useMemo(() => {
     if (state.trialData.length === 0) {
-      return { totalBonus: 0, totalScore: 0, maxPossibleScore: 6, trialScores: [] };
+      return { totalBonus: 0, totalScore: 0, maxPossibleScore: 5, correctCount: 0, trialScores: [] };
     }
     return calculateTotalBonus(state.trialData);
   }, [state.trialData]);
@@ -187,7 +187,7 @@ export function CompletionScreen() {
             <span className="font-semibold text-green-800">$2.50</span>
           </div>
           <div className="flex justify-between items-center">
-            <span className="text-green-700">Performance bonus:</span>
+            <span className="text-green-700">Accuracy bonus ({bonusInfo.correctCount}/{bonusInfo.maxPossibleScore} correct):</span>
             <span className="font-semibold text-green-800">{formatBonus(bonusInfo.totalBonus)}</span>
           </div>
           <div className="border-t border-green-300 pt-2 mt-2">
@@ -200,7 +200,7 @@ export function CompletionScreen() {
           </div>
         </div>
         <p className="text-xs text-green-600 mt-3">
-          Bonus calculated using quadratic scoring based on accuracy and confidence.
+          You earned $0.25 for each correctly classified snippet ({bonusInfo.correctCount} of {bonusInfo.maxPossibleScore} correct).
           Your bonus will be paid via Prolific within a few days.
         </p>
       </div>

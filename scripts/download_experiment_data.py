@@ -190,6 +190,7 @@ def filter_files_by_date(files, start_date, end_date):
 
 
 def main():
+    global BUCKET_NAME
     parser = argparse.ArgumentParser(description='Download experiment data from S3')
     parser.add_argument('--date', type=str, help='Single date (YYYY-MM-DD)')
     parser.add_argument('--date-range', nargs=2, metavar=('START', 'END'),
@@ -205,8 +206,6 @@ def main():
                         help='Create separate trial-level CSV')
 
     args = parser.parse_args()
-
-    global BUCKET_NAME
     BUCKET_NAME = args.bucket
 
     output_dir = Path(args.output) if args.output else OUTPUT_DIR

@@ -6,7 +6,7 @@ import { ProgressBar } from '../ProgressBar';
 import type { TrialResponses } from '../../types';
 import { stimuli } from '../../data/stimuli';
 
-const confidenceLevels = [
+const effortConfidenceLevels = [
   { value: 1, label: 'Not at all confident' },
   { value: 2, label: 'Slightly confident' },
   { value: 3, label: 'Moderately confident' },
@@ -20,7 +20,7 @@ export function TrialScreen() {
 
   const [responses, setResponses] = useState<TrialResponses>({
     aiDetection: null,
-    aiConfidence: null,
+    aiConfidence: 75,
     effortEstimate: 5,
     effortConfidence: null,
   });
@@ -44,7 +44,7 @@ export function TrialScreen() {
   useEffect(() => {
     setResponses({
       aiDetection: null,
-      aiConfidence: null,
+      aiConfidence: 75,
       effortEstimate: 5,
       effortConfidence: null,
     });
@@ -68,7 +68,7 @@ export function TrialScreen() {
 
   // Check if current phase is complete
   const isPhaseComplete = showAiQuestion
-    ? responses.aiDetection !== null && responses.aiConfidence !== null
+    ? responses.aiDetection !== null
     : responses.effortConfidence !== null;
 
   const handleNext = async () => {
@@ -179,47 +179,54 @@ function AIQuestionForm({
 }) {
   return (
     <div className="space-y-8">
-      {/* Question: AI Detection */}
+      {/* Question: AI Detection — forced binary */}
       <div>
-        <h3 className="text-lg font-medium text-gray-900 mb-3">
-          Do you think this code was written with AI assistance?
+        <h3 className="text-lg font-medium text-gray-900 mb-1">
+          Was this code written by a human or by AI?
         </h3>
-        <div className="flex gap-6">
-          {(['yes', 'no'] as const).map((option) => (
-            <label key={option} className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="radio"
-                name="aiDetection"
-                value={option}
-                checked={responses.aiDetection === option}
-                onChange={(e) => onChange('aiDetection', e.target.value)}
-                className="w-4 h-4 text-blue-600 focus:ring-blue-500"
-              />
-              <span className="text-gray-700 capitalize">{option}</span>
-            </label>
+        <p className="text-sm text-gray-500 mb-3">Each snippet had a 50/50 chance of being either.</p>
+        <div className="flex gap-4">
+          {([
+            { value: 'human', label: 'Human', icon: '👤' },
+            { value: 'ai', label: 'AI', icon: '🤖' },
+          ] as const).map(({ value, label, icon }) => (
+            <button
+              key={value}
+              type="button"
+              onClick={() => onChange('aiDetection', value)}
+              className={`flex-1 py-4 px-6 rounded-lg border-2 font-medium text-lg transition-all ${
+                responses.aiDetection === value
+                  ? 'border-blue-600 bg-blue-50 text-blue-700 shadow-md'
+                  : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50'
+              }`}
+            >
+              <span className="text-2xl mb-1 block">{icon}</span>
+              {label}
+            </button>
           ))}
         </div>
       </div>
 
-      {/* Question: AI Confidence */}
+      {/* Question: Confidence — 50% to 100% slider */}
       <div>
         <h3 className="text-lg font-medium text-gray-900 mb-3">
-          How confident are you in your answer?
+          How confident are you?
         </h3>
-        <div className="flex flex-wrap gap-4">
-          {confidenceLevels.map(({ value, label }) => (
-            <label key={value} className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="radio"
-                name="aiConfidence"
-                value={value}
-                checked={responses.aiConfidence === value}
-                onChange={(e) => onChange('aiConfidence', parseInt(e.target.value))}
-                className="w-4 h-4 text-blue-600 focus:ring-blue-500"
-              />
-              <span className="text-gray-700 text-sm">{label}</span>
-            </label>
-          ))}
+        <div className="px-2">
+          <input
+            type="range"
+            min="50"
+            max="100"
+            step="1"
+            value={responses.aiConfidence ?? 75}
+            onChange={(e) => onChange('aiConfidence', parseInt(e.target.value))}
+            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+          />
+          <div className="flex justify-between mt-2">
+            <span className="text-xs text-gray-500">50% — Just guessing</span>
+            <span className="text-lg font-semibold text-blue-600">{responses.aiConfidence ?? 75}%</span>
+            <span className="text-xs text-gray-500">100% — Completely certain</span>
+          </div>
         </div>
       </div>
     </div>
@@ -264,7 +271,7 @@ function EffortQuestionForm({
           How confident are you in your answer?
         </h3>
         <div className="flex flex-wrap gap-4">
-          {confidenceLevels.map(({ value, label }) => (
+          {effortConfidenceLevels.map(({ value, label }) => (
             <label key={value} className="flex items-center gap-2 cursor-pointer">
               <input
                 type="radio"

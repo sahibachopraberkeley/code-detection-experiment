@@ -51,6 +51,8 @@ export function WelcomeScreen() {
           <p className="text-gray-600">
             You will review several code snippets and answer questions about each one.
             No coding is required — you will only read and evaluate code.
+            Each snippet has a <span className="font-medium text-gray-900">50% chance</span> of being
+            AI-generated and a 50% chance of being human-written.
           </p>
         </div>
 
@@ -92,11 +94,9 @@ export function WelcomeScreen() {
           <h2 className="text-lg font-semibold text-green-800 mb-2">Payment</h2>
           <div className="space-y-2 text-green-700">
             <p><span className="font-medium">Base payment:</span> $2.50</p>
-            <p><span className="font-medium">Performance bonus:</span> Up to $1.50</p>
+            <p><span className="font-medium">Performance bonus:</span> Up to $1.25</p>
             <p className="text-sm text-green-600 mt-2">
-              Your bonus is calculated based on the accuracy and confidence of your responses.
-              Being confident and correct earns the highest bonus. Being uncertain is better than
-              being confidently wrong.
+              You earn a $0.25 bonus for each code snippet you correctly classify.
             </p>
           </div>
         </div>
