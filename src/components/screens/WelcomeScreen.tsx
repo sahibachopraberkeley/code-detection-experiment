@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useExperiment } from '../../context/ExperimentContext';
-import { config, getProlificParams, generateParticipantId } from '../../config';
+import { getProlificParams } from '../../config';
 
 export function WelcomeScreen() {
   const { dispatch } = useExperiment();
@@ -9,27 +9,15 @@ export function WelcomeScreen() {
   const [isProlificUser, setIsProlificUser] = useState(false);
 
   useEffect(() => {
-    if (config.useProlific) {
-      // Try to get Prolific ID from URL
-      const { prolificPid } = getProlificParams();
-      if (prolificPid) {
-        setParticipantId(prolificPid);
-        setIsProlificUser(true);
-      } else {
-        // Generate a participant ID for non-Prolific users
-        setParticipantId(generateParticipantId());
-        setShowManualInput(true);
-      }
+    // Try to get Prolific ID from URL params
+    const { prolificPid } = getProlificParams();
+    if (prolificPid) {
+      setParticipantId(prolificPid);
+      setIsProlificUser(true);
     } else {
-      // Not using Prolific, check URL params or generate ID
-      const params = new URLSearchParams(window.location.search);
-      const urlId = params.get('PROLIFIC_PID') || params.get('participant_id');
-      if (urlId) {
-        setParticipantId(urlId);
-      } else {
-        setParticipantId(generateParticipantId());
-        setShowManualInput(true);
-      }
+      // No ID in URL — show blank input so participant must enter it
+      setParticipantId('');
+      setShowManualInput(true);
     }
   }, []);
 
@@ -113,7 +101,7 @@ export function WelcomeScreen() {
       {showManualInput && (
         <div className="mb-6">
           <label htmlFor="participantId" className="block text-sm font-medium text-gray-700 mb-2">
-            Please enter your participant ID:
+            Please enter your Prolific ID:
           </label>
           <input
             type="text"
@@ -121,7 +109,7 @@ export function WelcomeScreen() {
             value={participantId}
             onChange={(e) => setParticipantId(e.target.value)}
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            placeholder="Enter your ID"
+            placeholder="Enter your Prolific ID"
           />
         </div>
       )}
