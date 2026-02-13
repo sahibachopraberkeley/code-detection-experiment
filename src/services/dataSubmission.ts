@@ -11,7 +11,7 @@ export interface SubmissionResult {
 
 // API Configuration
 const API_CONFIG = {
-  endpoint: import.meta.env.VITE_API_ENDPOINT || '',
+  endpoint: import.meta.env.VITE_API_ENDPOINT || '/api/submit',
   apiKey: import.meta.env.VITE_API_KEY || '',
   maxRetries: 3,
   timeout: 30000, // 30 seconds
