@@ -40,11 +40,15 @@ export function useBehaviorLogger() {
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, []);
 
-  // Log scroll events on the code container
+  // Log scroll events on the code container (throttled to max 1 per 500ms)
+  const lastScrollTime = useRef(0);
   const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
+    const now = Date.now();
+    if (now - lastScrollTime.current < 500) return;
+    lastScrollTime.current = now;
     const target = e.currentTarget;
     logRef.current.scrollEvents.push({
-      timestamp: Date.now(),
+      timestamp: now,
       scrollTop: target.scrollTop,
       scrollHeight: target.scrollHeight,
     });

@@ -18,6 +18,43 @@ const API_CONFIG = {
   baseDelay: 1000, // 1 second base delay for exponential backoff
 };
 
+// Max events to keep per array in behaviorLog (keeps payload under size limits)
+const MAX_SCROLL_EVENTS = 100;
+const MAX_RESPONSE_CHANGES = 200;
+
+/**
+ * Trim behaviorLog arrays to prevent oversized payloads.
+ * Keeps first and last N events, adds summary counts.
+ */
+function trimBehaviorLog(log: Record<string, unknown>): Record<string, unknown> {
+  const trimmed = { ...log } as Record<string, unknown>;
+  const scrollEvents = log.scrollEvents as unknown[] | undefined;
+  if (scrollEvents && scrollEvents.length > MAX_SCROLL_EVENTS) {
+    trimmed._scrollEventCount = scrollEvents.length;
+    trimmed.scrollEvents = scrollEvents.slice(-MAX_SCROLL_EVENTS);
+  }
+  const responseChanges = log.responseChanges as unknown[] | undefined;
+  if (responseChanges && responseChanges.length > MAX_RESPONSE_CHANGES) {
+    trimmed._responseChangeCount = responseChanges.length;
+    trimmed.responseChanges = responseChanges.slice(-MAX_RESPONSE_CHANGES);
+  }
+  return trimmed;
+}
+
+/**
+ * Trim session tracking arrays to prevent oversized payloads.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function trimSessionTracking(tracking: any): Record<string, unknown> {
+  const trimmed = { ...tracking } as Record<string, unknown>;
+  const focusEvents = tracking.focusEvents as unknown[] | undefined;
+  if (focusEvents && focusEvents.length > 200) {
+    trimmed._focusEventCount = focusEvents.length;
+    trimmed.focusEvents = focusEvents.slice(-200);
+  }
+  return trimmed;
+}
+
 // Queue for failed submissions (stored in localStorage)
 const QUEUE_KEY = 'experiment_submission_queue';
 
@@ -214,7 +251,7 @@ export async function submitExperimentData(data: ExperimentData): Promise<Submis
       questionOrder: t.questionOrder,
       buttonOrder: t.buttonOrder,
       responses: t.responses,
-      behaviorLog: t.behaviorLog,
+      behaviorLog: trimBehaviorLog(t.behaviorLog as unknown as Record<string, unknown>),
     })) || [],
     practiceData: data.practiceData ? {
       stimulusId: data.practiceData.stimulusId,
@@ -226,7 +263,7 @@ export async function submitExperimentData(data: ExperimentData): Promise<Submis
     postSurveyResponses: data.postSurveyResponses || {},
     screeningResponses: data.screeningResponses || {},
     codeScreenerResponses: data.codeScreenerResponses || {},
-    sessionTracking: data.sessionTracking || {},
+    sessionTracking: trimSessionTracking(data.sessionTracking || {} as object),
     bonusInfo: data.bonusInfo || {},
     startTime: data.startTime,
     endTime: data.endTime,
