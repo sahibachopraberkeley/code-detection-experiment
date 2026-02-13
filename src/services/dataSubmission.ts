@@ -279,6 +279,13 @@ export async function submitExperimentData(data: ExperimentData): Promise<Submis
   };
 
   console.log('[Submission] Data size:', JSON.stringify(submissionData).length, 'bytes');
+  // Per-field size breakdown for debugging
+  for (const [key, value] of Object.entries(submissionData)) {
+    const size = JSON.stringify(value).length;
+    if (size > 1000) {
+      console.log(`[Submission] Field "${key}": ${(size / 1024).toFixed(1)} KB`);
+    }
+  }
 
   try {
     const result = await submitToAPI(submissionData);
