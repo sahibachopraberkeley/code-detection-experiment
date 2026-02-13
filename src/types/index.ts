@@ -86,6 +86,7 @@ export interface TrialData {
   condition: 'human' | 'ai';
   presentationOrder: number;
   questionOrder: 'ai-first' | 'effort-first'; // Which question was shown first
+  buttonOrder: 'human-first' | 'ai-first'; // Which button appeared on the left
   responses: {
     aiDetection: 'human' | 'ai';
     aiConfidence: number; // 50-100

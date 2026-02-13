@@ -87,19 +87,10 @@ Resources:
       StageName: !Ref Environment
       Cors:
         AllowMethods: "'POST, OPTIONS'"
-        AllowHeaders: "'Content-Type, X-Api-Key'"
+        AllowHeaders: "'Content-Type'"
         AllowOrigin: !Sub "'${CorsOrigin}'"
       Auth:
-        ApiKeyRequired: true
-        UsagePlan:
-          CreateUsagePlan: PER_API
-          Description: !Sub 'Usage plan for code detection experiment ${Environment}'
-          Quota:
-            Limit: 100000
-            Period: MONTH
-          Throttle:
-            BurstLimit: 100
-            RateLimit: 50
+        ApiKeyRequired: false
 
 Outputs:
   ApiEndpoint:

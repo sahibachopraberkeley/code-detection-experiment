@@ -74,11 +74,12 @@ export function CompletionScreen() {
           console.log('[Completion] Cleared saved state after successful submission');
         }
       } catch (error) {
-        console.error('Submission error:', error);
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        console.error('Submission error:', errorMsg, error);
         setSubmissionStatus('error');
         setSubmissionResult({
           success: false,
-          message: 'Failed to submit data. Your responses have been saved locally.',
+          message: `Failed to submit data: ${errorMsg}. Your responses have been saved locally.`,
         });
       }
     };
@@ -110,11 +111,12 @@ export function CompletionScreen() {
         console.log('[Retry] Cleared saved state after successful submission');
       }
     } catch (error) {
-      console.error('Retry submission error:', error);
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      console.error('Retry submission error:', errorMsg, error);
       setSubmissionStatus('error');
       setSubmissionResult({
         success: false,
-        message: 'Failed to submit data. Your responses have been saved locally.',
+        message: `Retry failed: ${errorMsg}. Your responses have been saved locally.`,
       });
     }
   };

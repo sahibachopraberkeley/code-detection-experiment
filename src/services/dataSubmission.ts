@@ -128,11 +128,6 @@ async function submitToAPI(data: Record<string, unknown>): Promise<SubmissionRes
         'Content-Type': 'application/json',
       };
 
-      // Add API key if configured
-      if (API_CONFIG.apiKey) {
-        headers['X-Api-Key'] = API_CONFIG.apiKey;
-      }
-
       const response = await fetchWithTimeout(
         API_CONFIG.endpoint,
         {
@@ -217,12 +212,14 @@ export async function submitExperimentData(data: ExperimentData): Promise<Submis
       condition: t.condition,
       presentationOrder: t.presentationOrder,
       questionOrder: t.questionOrder,
+      buttonOrder: t.buttonOrder,
       responses: t.responses,
       behaviorLog: t.behaviorLog,
     })) || [],
     practiceData: data.practiceData ? {
       stimulusId: data.practiceData.stimulusId,
       condition: data.practiceData.condition,
+      buttonOrder: data.practiceData.buttonOrder,
       responses: data.practiceData.responses,
     } : null,
     demographicResponses: data.demographicResponses || {},

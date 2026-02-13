@@ -17,11 +17,16 @@ export function PracticeScreen() {
   );
   const [currentPhase, setCurrentPhase] = useState<'question1' | 'question2'>('question1');
 
+  // Randomize button order for practice
+  const [buttonOrder] = useState<'human-first' | 'ai-first'>(() =>
+    Math.random() < 0.5 ? 'human-first' : 'ai-first'
+  );
+
   const [responses, setResponses] = useState<TrialResponses>({
     aiDetection: null,
     aiConfidence: 75,
     effortEstimate: 5,
-    effortConfidence: 3,
+    effortConfidence: null,
   });
 
   useEffect(() => {
@@ -51,7 +56,7 @@ export function PracticeScreen() {
   // Check if current phase is complete
   const isPhaseComplete = showAiQuestion
     ? responses.aiDetection !== null
-    : true;
+    : responses.effortConfidence !== null;
 
   const handleNext = () => {
     if (!isPhaseComplete) return;
@@ -70,6 +75,7 @@ export function PracticeScreen() {
           condition: practiceStimulus.condition,
           presentationOrder: 0,
           questionOrder: questionOrder,
+          buttonOrder: buttonOrder,
           responses: {
             aiDetection: responses.aiDetection!,
             aiConfidence: responses.aiConfidence!,
@@ -110,7 +116,7 @@ export function PracticeScreen() {
 
       <div className="bg-gray-50 rounded-lg p-6 mb-6">
         {showAiQuestion ? (
-          <AIQuestionForm responses={responses} onChange={handleResponseChange} />
+          <AIQuestionForm responses={responses} onChange={handleResponseChange} humanFirst={buttonOrder === 'human-first'} />
         ) : (
           <EffortQuestionForm responses={responses} onChange={handleResponseChange} />
         )}
@@ -131,10 +137,18 @@ export function PracticeScreen() {
 function AIQuestionForm({
   responses,
   onChange,
+  humanFirst,
 }: {
   responses: TrialResponses;
   onChange: (field: keyof TrialResponses, value: string | number) => void;
+  humanFirst: boolean;
 }) {
+  const buttons = [
+    { value: 'human' as const, label: 'Human', icon: '👤' },
+    { value: 'ai' as const, label: 'AI', icon: '🤖' },
+  ];
+  const orderedButtons = humanFirst ? buttons : [buttons[1], buttons[0]];
+
   return (
     <div className="space-y-8">
       {/* Question: AI Detection — forced binary */}
@@ -144,10 +158,7 @@ function AIQuestionForm({
         </h3>
         <p className="text-sm text-gray-500 mb-3">Each snippet had a 50/50 chance of being either.</p>
         <div className="flex gap-4">
-          {([
-            { value: 'human', label: 'Human', icon: '👤' },
-            { value: 'ai', label: 'AI', icon: '🤖' },
-          ] as const).map(({ value, label, icon }) => (
+          {orderedButtons.map(({ value, label, icon }) => (
             <button
               key={value}
               type="button"
@@ -222,26 +233,32 @@ function EffortQuestionForm({
         </div>
       </div>
 
-      {/* Effort Confidence — slider */}
+      {/* Effort Confidence — labeled buttons */}
       <div>
         <h3 className="text-lg font-medium text-gray-900 mb-3">
           How confident are you in your effort estimate?
         </h3>
-        <div className="px-2">
-          <input
-            type="range"
-            min="1"
-            max="5"
-            step="1"
-            value={responses.effortConfidence ?? 3}
-            onChange={(e) => onChange('effortConfidence', parseInt(e.target.value))}
-            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
-          />
-          <div className="flex justify-between mt-2">
-            <span className="text-xs text-gray-500">1 — Not at all confident</span>
-            <span className="text-lg font-semibold text-blue-600">{responses.effortConfidence ?? 3}/5</span>
-            <span className="text-xs text-gray-500">5 — Extremely confident</span>
-          </div>
+        <div className="flex gap-2">
+          {([
+            { value: 1, label: 'Not at all' },
+            { value: 2, label: 'Slightly' },
+            { value: 3, label: 'Moderately' },
+            { value: 4, label: 'Very' },
+            { value: 5, label: 'Extremely' },
+          ]).map(({ value, label }) => (
+            <button
+              key={value}
+              type="button"
+              onClick={() => onChange('effortConfidence', value)}
+              className={`flex-1 py-2 px-1 rounded-lg border text-sm font-medium transition-all ${
+                responses.effortConfidence === value
+                  ? 'border-blue-600 bg-blue-50 text-blue-700 shadow-sm'
+                  : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
         </div>
       </div>
     </div>
