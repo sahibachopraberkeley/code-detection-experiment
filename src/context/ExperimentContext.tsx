@@ -147,12 +147,8 @@ function saveStateToStorage(state: ExperimentState): void {
     // Don't save if on completion screen (already submitted)
     if (state.currentScreen === 'completion') return;
 
-    const stateToSave = {
-      ...state,
-      // Exclude session tracking from saved state to keep it small
-      // Session tracking will be recreated on restore
-    };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(stateToSave));
+    const { sessionTracking: _st, ...stateWithoutTracking } = state;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(stateWithoutTracking));
     console.log('[Storage] State saved to localStorage');
   } catch (e) {
     console.warn('[Storage] Failed to save state:', e);

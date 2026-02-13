@@ -42,17 +42,43 @@ function trimBehaviorLog(log: Record<string, unknown>): Record<string, unknown> 
 }
 
 /**
- * Trim session tracking arrays to prevent oversized payloads.
+ * Aggressively trim session tracking to essential summary data only.
+ * Raw event arrays (focusEvents, clickPositions, windowResizes) are
+ * replaced with counts — they were causing 6.7MB payloads.
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function trimSessionTracking(tracking: any): Record<string, unknown> {
-  const trimmed = { ...tracking } as Record<string, unknown>;
-  const focusEvents = tracking.focusEvents as unknown[] | undefined;
-  if (focusEvents && focusEvents.length > 200) {
-    trimmed._focusEventCount = focusEvents.length;
-    trimmed.focusEvents = focusEvents.slice(-200);
-  }
-  return trimmed;
+  return {
+    // Identity
+    prolificPid: tracking.prolificPid,
+    studyId: tracking.studyId,
+    sessionId: tracking.sessionId,
+    // Device info
+    userAgent: tracking.userAgent,
+    screenWidth: tracking.screenWidth,
+    screenHeight: tracking.screenHeight,
+    windowWidth: tracking.windowWidth,
+    windowHeight: tracking.windowHeight,
+    timezone: tracking.timezone,
+    language: tracking.language,
+    platform: tracking.platform,
+    // Timing
+    sessionStart: tracking.sessionStart,
+    sessionEnd: tracking.sessionEnd,
+    totalDuration: tracking.totalDuration,
+    // Page timings (bounded by number of screens, ~10 entries max)
+    pageTimings: (tracking.pageTimings || []).slice(-20),
+    // Attention summary (counts only — no raw event arrays)
+    totalTimeAway: tracking.totalTimeAway,
+    blurCount: tracking.blurCount,
+    focusEventCount: (tracking.focusEvents || []).length,
+    // Mouse summary (counts only — no clickPositions array)
+    totalMoves: tracking.mouseActivity?.totalMoves ?? 0,
+    totalClicks: tracking.mouseActivity?.totalClicks ?? 0,
+    // Quality signals
+    windowResizeCount: (tracking.windowResizes || []).length,
+    rapidResponses: tracking.rapidResponses,
+  };
 }
 
 // Queue for failed submissions (stored in localStorage)
