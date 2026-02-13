@@ -149,6 +149,7 @@ export function CodeScreenerScreen() {
       <h1 className="text-2xl font-bold text-gray-900 mb-2">Code Knowledge Check</h1>
       <p className="text-gray-600 mb-6">
         Please answer the following questions to verify your programming knowledge.
+        The questions use <span className="font-medium text-gray-900">pseudo-code</span> (not tied to any specific language).
         You need to answer at least {REQUIRED_CORRECT} out of {screenerQuestions.length} correctly to continue.
       </p>
 

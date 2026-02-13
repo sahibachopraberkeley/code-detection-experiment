@@ -24,15 +24,15 @@ export function PostSurveyScreen() {
 
       <div className="mb-6">
         <label className="block text-lg font-medium text-gray-900 mb-3">
-          What cues or signals did you use when trying to identify AI-generated code? Please
-          describe your thought process.
+          For the code snippets you thought were AI-generated, what cues or signals did you use
+          to make that judgment? Please describe your thought process.
         </label>
         <textarea
           value={detectionCues}
           onChange={(e) => setDetectionCues(e.target.value)}
           rows={6}
           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
-          placeholder="Describe the patterns, characteristics, or signals you looked for..."
+          placeholder="Describe the patterns, characteristics, or signals that made you think certain snippets were AI-generated..."
         />
         <p className="mt-2 text-sm text-gray-500">
           {detectionCues.length < 10

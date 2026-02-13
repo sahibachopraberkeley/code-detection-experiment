@@ -6,13 +6,7 @@ import { ProgressBar } from '../ProgressBar';
 import type { TrialResponses } from '../../types';
 import { stimuli } from '../../data/stimuli';
 
-const effortConfidenceLevels = [
-  { value: 1, label: 'Not at all confident' },
-  { value: 2, label: 'Slightly confident' },
-  { value: 3, label: 'Moderately confident' },
-  { value: 4, label: 'Very confident' },
-  { value: 5, label: 'Extremely confident' },
-];
+// Effort confidence levels kept for reference but now using slider
 
 export function TrialScreen() {
   const { state, dispatch, getCurrentStimulus, submitPartialData } = useExperiment();
@@ -22,7 +16,7 @@ export function TrialScreen() {
     aiDetection: null,
     aiConfidence: 75,
     effortEstimate: 5,
-    effortConfidence: null,
+    effortConfidence: 3,
   });
 
   const currentStimulus = getCurrentStimulus();
@@ -46,7 +40,7 @@ export function TrialScreen() {
       aiDetection: null,
       aiConfidence: 75,
       effortEstimate: 5,
-      effortConfidence: null,
+      effortConfidence: 3,
     });
     behaviorLogger.reset();
   }, [state.currentTrialIndex]);
@@ -67,9 +61,10 @@ export function TrialScreen() {
   };
 
   // Check if current phase is complete
+  // AI phase requires explicit selection; effort phase uses sliders with defaults
   const isPhaseComplete = showAiQuestion
     ? responses.aiDetection !== null
-    : responses.effortConfidence !== null;
+    : true;
 
   const handleNext = async () => {
     if (!isPhaseComplete || !currentStimulus) return;
@@ -265,25 +260,26 @@ function EffortQuestionForm({
         </div>
       </div>
 
-      {/* Question: Effort Confidence */}
+      {/* Question: Effort Confidence — slider */}
       <div>
         <h3 className="text-lg font-medium text-gray-900 mb-3">
-          How confident are you in your answer?
+          How confident are you in your effort estimate?
         </h3>
-        <div className="flex flex-wrap gap-4">
-          {effortConfidenceLevels.map(({ value, label }) => (
-            <label key={value} className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="radio"
-                name="effortConfidence"
-                value={value}
-                checked={responses.effortConfidence === value}
-                onChange={(e) => onChange('effortConfidence', parseInt(e.target.value))}
-                className="w-4 h-4 text-blue-600 focus:ring-blue-500"
-              />
-              <span className="text-gray-700 text-sm">{label}</span>
-            </label>
-          ))}
+        <div className="px-2">
+          <input
+            type="range"
+            min="1"
+            max="5"
+            step="1"
+            value={responses.effortConfidence ?? 3}
+            onChange={(e) => onChange('effortConfidence', parseInt(e.target.value))}
+            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+          />
+          <div className="flex justify-between mt-2">
+            <span className="text-xs text-gray-500">1 — Not at all confident</span>
+            <span className="text-lg font-semibold text-blue-600">{responses.effortConfidence ?? 3}/5</span>
+            <span className="text-xs text-gray-500">5 — Extremely confident</span>
+          </div>
         </div>
       </div>
     </div>
