@@ -123,12 +123,22 @@ export function WelcomeScreen() {
         </div>
       )}
 
-      {/* Consent Notice */}
-      <div className="mb-6 p-4 bg-gray-100 border border-gray-300 rounded-lg">
+      {/* Research Info & Consent Notice */}
+      <div className="mb-6 p-4 bg-gray-100 border border-gray-300 rounded-lg space-y-3">
+        <p className="text-sm text-gray-700">
+          <span className="font-medium">Research Information:</span> This study is conducted by researchers at the
+          University of California, Berkeley. Your responses are anonymous and will be used solely for academic
+          research purposes. No personally identifying information will be collected beyond your Prolific ID,
+          which is used only for payment processing.
+        </p>
         <p className="text-sm text-gray-700">
           <span className="font-medium">Consent:</span> By clicking "Begin" below, you confirm that you have
           read and understood the information above, and you voluntarily agree to participate in this research study.
-          Your participation is voluntary and you may withdraw at any time.
+          Your participation is voluntary and you may withdraw at any time without penalty.
+        </p>
+        <p className="text-sm text-gray-500">
+          If you have any questions or concerns about this study, please contact the research team
+          at <a href="mailto:sahiba.chopra@berkeley.edu" className="text-blue-600 underline">sahiba.chopra@berkeley.edu</a>.
         </p>
       </div>
 
