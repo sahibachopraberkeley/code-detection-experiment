@@ -43,16 +43,11 @@ export function DemographicsScreen() {
     }));
   };
 
-  const isGitHubValid =
-    responses.github.hasGitHub === false ||
-    (responses.github.hasGitHub === true && responses.github.githubUrl.trim() !== '');
-
   const isValid =
     responses.yearsExperience &&
     responses.primaryLanguages.length > 0 &&
     responses.aiToolUsage &&
-    responses.github.hasGitHub !== null &&
-    isGitHubValid;
+    responses.github.hasGitHub !== null;
 
   const handleContinue = () => {
     if (!isValid) return;
@@ -164,25 +159,6 @@ export function DemographicsScreen() {
             </label>
           </div>
 
-          {responses.github.hasGitHub === true && (
-            <div className="mt-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Please enter your GitHub profile URL
-              </label>
-              <input
-                type="url"
-                placeholder="https://github.com/username"
-                value={responses.github.githubUrl}
-                onChange={(e) =>
-                  setResponses((prev) => ({
-                    ...prev,
-                    github: { ...prev.github, githubUrl: e.target.value },
-                  }))
-                }
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
-          )}
         </div>
       </div>
 
