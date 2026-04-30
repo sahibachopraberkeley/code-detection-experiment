@@ -4,6 +4,7 @@ import { useExperiment } from '../../context/ExperimentContext';
 export function PostSurveyScreen() {
   const { dispatch } = useExperiment();
   const [detectionCues, setDetectionCues] = useState('');
+  const [studyFeedback, setStudyFeedback] = useState('');
 
   const isValid = detectionCues.trim().length >= 10;
 
@@ -12,7 +13,10 @@ export function PostSurveyScreen() {
 
     dispatch({
       type: 'SET_POST_SURVEY_RESPONSES',
-      payload: { detectionCues: detectionCues.trim() },
+      payload: {
+        detectionCues: detectionCues.trim(),
+        studyFeedback: studyFeedback.trim(),
+      },
     });
 
     dispatch({ type: 'SET_SCREEN', payload: 'completion' });
@@ -20,9 +24,9 @@ export function PostSurveyScreen() {
 
   return (
     <div className="max-w-2xl mx-auto">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Final Question</h1>
+      <h1 className="text-2xl font-bold text-gray-900 mb-6">Final Questions</h1>
 
-      <div className="mb-6">
+      <div className="mb-8">
         <label className="block text-lg font-medium text-gray-900 mb-3">
           For the code snippets you thought were AI-generated, what cues or signals did you use
           to make that judgment? Please describe your thought process.
@@ -39,6 +43,25 @@ export function PostSurveyScreen() {
             ? `Please write at least 10 characters (${detectionCues.length}/10)`
             : `${detectionCues.length} characters`}
         </p>
+      </div>
+
+      <div className="mb-6">
+        <label className="block text-lg font-medium text-gray-900 mb-3">
+          What did you think of the study? If you have any comments for the researchers, please
+          put them in the text box below.{' '}
+          <span className="underline">
+            If anything during the study was unclear or you think could be improved in some way
+            we would greatly appreciate you letting us know.
+          </span>
+        </label>
+        <textarea
+          value={studyFeedback}
+          onChange={(e) => setStudyFeedback(e.target.value)}
+          rows={5}
+          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+          placeholder="Optional — your feedback helps us improve future studies."
+        />
+        <p className="mt-2 text-sm text-gray-500">Optional</p>
       </div>
 
       <button

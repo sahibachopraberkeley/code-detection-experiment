@@ -12,8 +12,8 @@ export function TrialScreen() {
 
   const [responses, setResponses] = useState<TrialResponses>({
     aiDetection: null,
-    aiConfidence: 75,
-    effortEstimate: 5,
+    aiConfidence: null,
+    effortEstimate: null,
     effortConfidence: null,
     mergeWillingness: null,
   });
@@ -43,8 +43,8 @@ export function TrialScreen() {
   useEffect(() => {
     setResponses({
       aiDetection: null,
-      aiConfidence: 75,
-      effortEstimate: 5,
+      aiConfidence: null,
+      effortEstimate: null,
       effortConfidence: null,
       mergeWillingness: null,
     });
@@ -69,12 +69,12 @@ export function TrialScreen() {
     behaviorLogger.logResponseChange(logField, oldValue, value);
   };
 
-  // Check if current phase is complete
+  // Check if current phase is complete (every visible response must be set)
   const isPhaseComplete = showMergeQuestion
     ? responses.mergeWillingness !== null
     : showAiQuestion
-      ? responses.aiDetection !== null
-      : responses.effortConfidence !== null;
+      ? responses.aiDetection !== null && responses.aiConfidence !== null
+      : responses.effortEstimate !== null && responses.effortConfidence !== null;
 
   const handleNext = async () => {
     if (!isPhaseComplete || !currentStimulus) return;
@@ -97,7 +97,7 @@ export function TrialScreen() {
           responses: {
             aiDetection: responses.aiDetection!,
             aiConfidence: responses.aiConfidence!,
-            effortEstimate: responses.effortEstimate,
+            effortEstimate: responses.effortEstimate!,
             effortConfidence: responses.effortConfidence!,
             mergeWillingness: responses.mergeWillingness!,
           },
@@ -239,13 +239,29 @@ function AIQuestionForm({
             step="1"
             value={responses.aiConfidence ?? 75}
             onChange={(e) => onChange('aiConfidence', parseInt(e.target.value))}
+            onMouseDown={() => {
+              if (responses.aiConfidence === null) onChange('aiConfidence', 75);
+            }}
+            onTouchStart={() => {
+              if (responses.aiConfidence === null) onChange('aiConfidence', 75);
+            }}
+            onKeyDown={() => {
+              if (responses.aiConfidence === null) onChange('aiConfidence', 75);
+            }}
             className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
           />
           <div className="flex justify-between mt-2">
             <span className="text-xs text-gray-500">50% — Just guessing</span>
-            <span className="text-lg font-semibold text-blue-600">{responses.aiConfidence ?? 75}%</span>
+            <span className="text-lg font-semibold text-blue-600">
+              {responses.aiConfidence === null ? '—' : `${responses.aiConfidence}%`}
+            </span>
             <span className="text-xs text-gray-500">100% — Completely certain</span>
           </div>
+          {responses.aiConfidence === null && (
+            <p className="text-xs text-gray-400 mt-3 text-center">
+              Move the slider to record your response.
+            </p>
+          )}
         </div>
       </div>
     </div>
@@ -272,15 +288,31 @@ function EffortQuestionForm({
             type="range"
             min="1"
             max="10"
-            value={responses.effortEstimate}
+            value={responses.effortEstimate ?? 5}
             onChange={(e) => onChange('effortEstimate', parseInt(e.target.value))}
+            onMouseDown={() => {
+              if (responses.effortEstimate === null) onChange('effortEstimate', 5);
+            }}
+            onTouchStart={() => {
+              if (responses.effortEstimate === null) onChange('effortEstimate', 5);
+            }}
+            onKeyDown={() => {
+              if (responses.effortEstimate === null) onChange('effortEstimate', 5);
+            }}
             className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
           />
           <div className="flex justify-between mt-2">
             <span className="text-xs text-gray-500">1 = Trivial/minimal effort</span>
-            <span className="text-lg font-semibold text-blue-600">{responses.effortEstimate}/10</span>
+            <span className="text-lg font-semibold text-blue-600">
+              {responses.effortEstimate === null ? '—' : `${responses.effortEstimate}/10`}
+            </span>
             <span className="text-xs text-gray-500">10 = Substantial effort</span>
           </div>
+          {responses.effortEstimate === null && (
+            <p className="text-xs text-gray-400 mt-3 text-center">
+              Move the slider to record your response.
+            </p>
+          )}
         </div>
       </div>
 

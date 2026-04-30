@@ -84,7 +84,7 @@ const initialState: ExperimentState = {
   },
   trialData: [],
   practiceData: null,
-  postSurveyResponses: { detectionCues: '' },
+  postSurveyResponses: { detectionCues: '', studyFeedback: '' },
   sessionTracking: createInitialSessionTracking(),
 };
 

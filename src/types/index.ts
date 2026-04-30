@@ -77,7 +77,7 @@ export interface SessionTracking {
 export interface TrialResponses {
   aiDetection: 'human' | 'ai' | null;
   aiConfidence: number | null; // 50-100 (percent confident in detection answer)
-  effortEstimate: number; // 1-10
+  effortEstimate: number | null; // 1-10
   effortConfidence: number | null; // 1-5
   mergeWillingness: number | null; // 0-100 (willingness to merge code as-is)
 }
@@ -122,6 +122,7 @@ export interface DemographicResponses {
 
 export interface PostSurveyResponses {
   detectionCues: string;
+  studyFeedback: string;
 }
 
 export type ScreenType =
