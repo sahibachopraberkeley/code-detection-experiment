@@ -15,6 +15,7 @@ export function TrialScreen() {
     aiConfidence: 75,
     effortEstimate: 5,
     effortConfidence: null,
+    mergeWillingness: null,
   });
 
   const currentStimulus = getCurrentStimulus();
@@ -22,15 +23,16 @@ export function TrialScreen() {
   const currentTrialNumber = state.currentTrialIndex + 1;
   const currentPhase = state.currentTrialPhase;
 
-  // Get the question order for this stimulus
+  // Get the question order for this stimulus (only applies to phases 1 and 2)
   const questionOrder = currentStimulus
     ? state.questionOrderAssignments[currentStimulus.id] || 'ai-first'
     : 'ai-first';
 
-  // Determine which question type to show based on phase and randomized order
+  // Phase 1 / 2: AI and effort questions in randomized order. Phase 3: merge slider (always last).
   const showAiQuestion =
     (currentPhase === 'question1' && questionOrder === 'ai-first') ||
     (currentPhase === 'question2' && questionOrder === 'effort-first');
+  const showMergeQuestion = currentPhase === 'question3';
 
   // Randomize button order per trial
   const [buttonOrder, setButtonOrder] = useState<'human-first' | 'ai-first'>(() =>
@@ -44,6 +46,7 @@ export function TrialScreen() {
       aiConfidence: 75,
       effortEstimate: 5,
       effortConfidence: null,
+      mergeWillingness: null,
     });
     setButtonOrder(Math.random() < 0.5 ? 'human-first' : 'ai-first');
     behaviorLogger.reset();
@@ -60,23 +63,27 @@ export function TrialScreen() {
           ? 'aiConfidence'
           : field === 'effortEstimate'
             ? 'effort'
-            : 'effortConfidence';
+            : field === 'effortConfidence'
+              ? 'effortConfidence'
+              : 'mergeWillingness';
     behaviorLogger.logResponseChange(logField, oldValue, value);
   };
 
   // Check if current phase is complete
-  const isPhaseComplete = showAiQuestion
-    ? responses.aiDetection !== null
-    : responses.effortConfidence !== null;
+  const isPhaseComplete = showMergeQuestion
+    ? responses.mergeWillingness !== null
+    : showAiQuestion
+      ? responses.aiDetection !== null
+      : responses.effortConfidence !== null;
 
   const handleNext = async () => {
     if (!isPhaseComplete || !currentStimulus) return;
 
-    if (currentPhase === 'question1') {
-      // Move to second question page
+    if (currentPhase === 'question1' || currentPhase === 'question2') {
+      // Move to next question page
       dispatch({ type: 'NEXT_TRIAL_PHASE' });
     } else {
-      // Both questions answered, save trial data and move to next stimulus
+      // All three questions answered, save trial data and move to next stimulus
       const log = behaviorLogger.finalize();
 
       dispatch({
@@ -92,6 +99,7 @@ export function TrialScreen() {
             aiConfidence: responses.aiConfidence!,
             effortEstimate: responses.effortEstimate,
             effortConfidence: responses.effortConfidence!,
+            mergeWillingness: responses.mergeWillingness!,
           },
           behaviorLog: log,
         },
@@ -115,16 +123,17 @@ export function TrialScreen() {
     return <div>Loading...</div>;
   }
 
-  // Calculate progress: each stimulus has 2 phases
-  const totalPhases = totalTrials * 2;
-  const currentPhaseNumber = (state.currentTrialIndex * 2) + (currentPhase === 'question1' ? 1 : 2);
+  // Calculate progress: each stimulus has 3 phases
+  const totalPhases = totalTrials * 3;
+  const phaseIndex = currentPhase === 'question1' ? 1 : currentPhase === 'question2' ? 2 : 3;
+  const currentPhaseNumber = state.currentTrialIndex * 3 + phaseIndex;
 
   return (
     <div className="max-w-3xl mx-auto">
       <ProgressBar current={currentPhaseNumber} total={totalPhases} />
 
       <div className="text-sm text-gray-500 mb-4">
-        Code snippet {currentTrialNumber} of {totalTrials} — Question {currentPhase === 'question1' ? '1' : '2'} of 2
+        Code snippet {currentTrialNumber} of {totalTrials} — Question {phaseIndex} of 3
       </div>
 
       <div className="mb-6">
@@ -141,7 +150,12 @@ export function TrialScreen() {
       </div>
 
       <div className="bg-gray-50 rounded-lg p-6 mb-6">
-        {showAiQuestion ? (
+        {showMergeQuestion ? (
+          <MergeQuestionForm
+            responses={responses}
+            onChange={handleResponseChange}
+          />
+        ) : showAiQuestion ? (
           <AIQuestionForm
             responses={responses}
             onChange={handleResponseChange}
@@ -160,7 +174,7 @@ export function TrialScreen() {
         disabled={!isPhaseComplete}
         className="w-full py-3 px-6 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
       >
-        {currentPhase === 'question1' ? 'Next Question' : currentTrialNumber >= totalTrials ? 'Finish Trials' : 'Next Code Snippet'}
+        {currentPhase !== 'question3' ? 'Next Question' : currentTrialNumber >= totalTrials ? 'Finish Trials' : 'Next Code Snippet'}
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
         </svg>
@@ -296,6 +310,62 @@ function EffortQuestionForm({
               {label}
             </button>
           ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Merge Willingness Question Form (always shown last)
+function MergeQuestionForm({
+  responses,
+  onChange,
+}: {
+  responses: TrialResponses;
+  onChange: (field: keyof TrialResponses, value: string | number) => void;
+}) {
+  const value = responses.mergeWillingness;
+  return (
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-lg font-medium text-gray-900 mb-1">
+          Imagine this code was submitted to your team's repository as a pull request. How willing
+          would you be to merge it as-is?
+        </h3>
+        <p className="text-sm text-gray-500 mb-4">
+          "As-is" means without requesting any changes from the contributor.
+        </p>
+        <div className="px-2">
+          <input
+            type="range"
+            min="0"
+            max="100"
+            step="1"
+            value={value ?? 50}
+            onChange={(e) => onChange('mergeWillingness', parseInt(e.target.value))}
+            onMouseDown={() => {
+              if (value === null) onChange('mergeWillingness', 50);
+            }}
+            onTouchStart={() => {
+              if (value === null) onChange('mergeWillingness', 50);
+            }}
+            onKeyDown={() => {
+              if (value === null) onChange('mergeWillingness', 50);
+            }}
+            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+          />
+          <div className="flex justify-between mt-2">
+            <span className="text-xs text-gray-500">0 — Definitely would not merge</span>
+            <span className="text-lg font-semibold text-blue-600">
+              {value === null ? '—' : `${value}/100`}
+            </span>
+            <span className="text-xs text-gray-500">100 — Definitely would merge</span>
+          </div>
+          {value === null && (
+            <p className="text-xs text-gray-400 mt-3 text-center">
+              Move the slider to record your response.
+            </p>
+          )}
         </div>
       </div>
     </div>

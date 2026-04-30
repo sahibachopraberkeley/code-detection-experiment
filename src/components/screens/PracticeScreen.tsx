@@ -15,7 +15,7 @@ export function PracticeScreen() {
   const [questionOrder] = useState<'ai-first' | 'effort-first'>(() =>
     Math.random() < 0.5 ? 'ai-first' : 'effort-first'
   );
-  const [currentPhase, setCurrentPhase] = useState<'question1' | 'question2'>('question1');
+  const [currentPhase, setCurrentPhase] = useState<'question1' | 'question2' | 'question3'>('question1');
 
   // Randomize button order for practice
   const [buttonOrder] = useState<'human-first' | 'ai-first'>(() =>
@@ -27,16 +27,18 @@ export function PracticeScreen() {
     aiConfidence: 75,
     effortEstimate: 5,
     effortConfidence: null,
+    mergeWillingness: null,
   });
 
   useEffect(() => {
     behaviorLogger.reset();
   }, []);
 
-  // Determine which question type to show based on phase and randomized order
+  // Phase 1 / 2: AI and effort questions in randomized order. Phase 3: merge slider (always last).
   const showAiQuestion =
     (currentPhase === 'question1' && questionOrder === 'ai-first') ||
     (currentPhase === 'question2' && questionOrder === 'effort-first');
+  const showMergeQuestion = currentPhase === 'question3';
 
   const handleResponseChange = (field: keyof TrialResponses, value: string | number) => {
     const oldValue = responses[field];
@@ -49,23 +51,28 @@ export function PracticeScreen() {
           ? 'aiConfidence'
           : field === 'effortEstimate'
             ? 'effort'
-            : 'effortConfidence';
+            : field === 'effortConfidence'
+              ? 'effortConfidence'
+              : 'mergeWillingness';
     behaviorLogger.logResponseChange(logField, oldValue, value);
   };
 
   // Check if current phase is complete
-  const isPhaseComplete = showAiQuestion
-    ? responses.aiDetection !== null
-    : responses.effortConfidence !== null;
+  const isPhaseComplete = showMergeQuestion
+    ? responses.mergeWillingness !== null
+    : showAiQuestion
+      ? responses.aiDetection !== null
+      : responses.effortConfidence !== null;
 
   const handleNext = () => {
     if (!isPhaseComplete) return;
 
     if (currentPhase === 'question1') {
-      // Move to second question page
       setCurrentPhase('question2');
+    } else if (currentPhase === 'question2') {
+      setCurrentPhase('question3');
     } else {
-      // Both questions answered, save practice data
+      // All three questions answered, save practice data
       const log = behaviorLogger.finalize();
 
       dispatch({
@@ -81,6 +88,7 @@ export function PracticeScreen() {
             aiConfidence: responses.aiConfidence!,
             effortEstimate: responses.effortEstimate,
             effortConfidence: responses.effortConfidence!,
+            mergeWillingness: responses.mergeWillingness!,
           },
           behaviorLog: log,
         },
@@ -97,7 +105,7 @@ export function PracticeScreen() {
           Practice Trial
         </span>
         <span className="ml-3 text-sm text-gray-500">
-          Question {currentPhase === 'question1' ? '1' : '2'} of 2
+          Question {currentPhase === 'question1' ? '1' : currentPhase === 'question2' ? '2' : '3'} of 3
         </span>
       </div>
 
@@ -115,7 +123,9 @@ export function PracticeScreen() {
       </div>
 
       <div className="bg-gray-50 rounded-lg p-6 mb-6">
-        {showAiQuestion ? (
+        {showMergeQuestion ? (
+          <MergeQuestionForm responses={responses} onChange={handleResponseChange} />
+        ) : showAiQuestion ? (
           <AIQuestionForm responses={responses} onChange={handleResponseChange} humanFirst={buttonOrder === 'human-first'} />
         ) : (
           <EffortQuestionForm responses={responses} onChange={handleResponseChange} />
@@ -127,7 +137,7 @@ export function PracticeScreen() {
         disabled={!isPhaseComplete}
         className="w-full py-3 px-6 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
       >
-        {currentPhase === 'question1' ? 'Next Question' : 'Submit Practice Response'}
+        {currentPhase === 'question3' ? 'Submit Practice Response' : 'Next Question'}
       </button>
     </div>
   );
@@ -265,6 +275,62 @@ function EffortQuestionForm({
   );
 }
 
+// Merge Willingness Question Form (always shown last)
+function MergeQuestionForm({
+  responses,
+  onChange,
+}: {
+  responses: TrialResponses;
+  onChange: (field: keyof TrialResponses, value: string | number) => void;
+}) {
+  const value = responses.mergeWillingness;
+  return (
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-lg font-medium text-gray-900 mb-1">
+          Imagine this code was submitted to your team's repository as a pull request. How willing
+          would you be to merge it as-is?
+        </h3>
+        <p className="text-sm text-gray-500 mb-4">
+          "As-is" means without requesting any changes from the contributor.
+        </p>
+        <div className="px-2">
+          <input
+            type="range"
+            min="0"
+            max="100"
+            step="1"
+            value={value ?? 50}
+            onChange={(e) => onChange('mergeWillingness', parseInt(e.target.value))}
+            onMouseDown={() => {
+              if (value === null) onChange('mergeWillingness', 50);
+            }}
+            onTouchStart={() => {
+              if (value === null) onChange('mergeWillingness', 50);
+            }}
+            onKeyDown={() => {
+              if (value === null) onChange('mergeWillingness', 50);
+            }}
+            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+          />
+          <div className="flex justify-between mt-2">
+            <span className="text-xs text-gray-500">0 — Definitely would not merge</span>
+            <span className="text-lg font-semibold text-blue-600">
+              {value === null ? '—' : `${value}/100`}
+            </span>
+            <span className="text-xs text-gray-500">100 — Definitely would merge</span>
+          </div>
+          {value === null && (
+            <p className="text-xs text-gray-400 mt-3 text-center">
+              Move the slider to record your response.
+            </p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function PracticeFeedbackScreen() {
   const { dispatch } = useExperiment();
 
@@ -294,7 +360,7 @@ export function PracticeFeedbackScreen() {
 
       <p className="text-gray-600 mb-8">
         Great! That was a practice trial to familiarize you with the interface. The main study will
-        now begin. For each code snippet, you'll answer two questions on separate pages.
+        now begin. For each code snippet, you'll answer three questions on separate pages.
       </p>
 
       <button

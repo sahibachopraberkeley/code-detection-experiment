@@ -107,7 +107,10 @@ function experimentReducer(state: ExperimentState, action: Action): ExperimentSt
     case 'NEXT_TRIAL':
       return { ...state, currentTrialIndex: state.currentTrialIndex + 1, currentTrialPhase: 'question1' };
     case 'NEXT_TRIAL_PHASE':
-      return { ...state, currentTrialPhase: 'question2' };
+      return {
+        ...state,
+        currentTrialPhase: state.currentTrialPhase === 'question1' ? 'question2' : 'question3',
+      };
     case 'SET_POST_SURVEY_RESPONSES':
       return { ...state, postSurveyResponses: action.payload };
     case 'UPDATE_SESSION_TRACKING':

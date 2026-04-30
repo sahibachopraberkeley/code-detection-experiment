@@ -66,7 +66,7 @@ export function useBehaviorLogger() {
 
   // Log response changes
   const logResponseChange = useCallback(
-    (field: 'aiDetection' | 'aiConfidence' | 'effort' | 'effortConfidence', oldValue: string | number | null, newValue: string | number) => {
+    (field: 'aiDetection' | 'aiConfidence' | 'effort' | 'effortConfidence' | 'mergeWillingness', oldValue: string | number | null, newValue: string | number) => {
       // Record first interaction time
       if (!firstInteractionRecorded.current) {
         logRef.current.timeToFirstInteraction = Date.now() - logRef.current.stimulusViewStart;

@@ -4,7 +4,7 @@ export interface BehaviorLog {
   copyAttempts: Array<{ timestamp: number; selectedText: string }>;
   responseChanges: Array<{
     timestamp: number;
-    field: 'aiDetection' | 'aiConfidence' | 'effort' | 'effortConfidence';
+    field: 'aiDetection' | 'aiConfidence' | 'effort' | 'effortConfidence' | 'mergeWillingness';
     oldValue: string | number | null;
     newValue: string | number;
   }>;
@@ -79,19 +79,21 @@ export interface TrialResponses {
   aiConfidence: number | null; // 50-100 (percent confident in detection answer)
   effortEstimate: number; // 1-10
   effortConfidence: number | null; // 1-5
+  mergeWillingness: number | null; // 0-100 (willingness to merge code as-is)
 }
 
 export interface TrialData {
   stimulusId: string;
   condition: 'human' | 'ai';
   presentationOrder: number;
-  questionOrder: 'ai-first' | 'effort-first'; // Which question was shown first
+  questionOrder: 'ai-first' | 'effort-first'; // Which of the first two questions was shown first
   buttonOrder: 'human-first' | 'ai-first'; // Which button appeared on the left
   responses: {
     aiDetection: 'human' | 'ai';
     aiConfidence: number; // 50-100
     effortEstimate: number;
     effortConfidence: number;
+    mergeWillingness: number; // 0-100
   };
   behaviorLog: BehaviorLog;
 }
@@ -145,7 +147,7 @@ export interface ExperimentState {
   // Progress
   currentScreen: ScreenType;
   currentTrialIndex: number;
-  currentTrialPhase: 'question1' | 'question2'; // Which question page within a trial
+  currentTrialPhase: 'question1' | 'question2' | 'question3'; // Which question page within a trial (merge willingness is always question3)
 
   // Collected data
   screeningResponses: ScreeningResponses;
